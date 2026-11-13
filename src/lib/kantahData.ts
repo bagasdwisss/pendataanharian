@@ -78,14 +78,9 @@ export const KELURAHAN_BY_KECAMATAN: Record<string, string[]> = {
 };
 
 export const TIM_PRESETS = [
-  { id: '1', label: 'TIM 1' },
-  { id: '2', label: 'TIM 2' },
-  { id: '3', label: 'TIM 3' },
-  { id: '4', label: 'TIM 4' },
-  { id: '5', label: 'TIM 5' },
-  { id: '1 dan 2', label: 'TIM 1 & 2' },
-  { id: '3 dan 4', label: 'TIM 3 & 4' },
-  { id: 'custom', label: 'Kustom...' },
+  { id: 'TIM 1&2', label: 'TIM 1&2', folderName: 'TEAM 1&2' },
+  { id: 'TIM 3', label: 'TIM 3', folderName: 'TEAM 3' },
+  { id: 'TIM 4', label: 'TIM 4', folderName: 'TEAM 4' },
 ];
 
 export const PASTEL_THEMES = [

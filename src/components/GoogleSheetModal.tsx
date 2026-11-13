@@ -79,27 +79,53 @@ export const GoogleSheetModal: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Spreadsheet Link Banner */}
-        <div className="mt-4 bg-white rounded-2xl border-2 border-brutal p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-neo-sm">
-          <div className="flex items-center gap-2.5">
-            <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
-            <div>
-              <span className="text-xs font-black text-brutal block">
-                Publikasi Google Spreadsheet Terhubung:
-              </span>
-              <span className="text-[11px] text-gray-500 font-medium truncate max-w-md block">
-                docs.google.com/spreadsheets/.../pubhtml?gid=1897439068
-              </span>
+        {/* Spreadsheet & Drive Link Banners */}
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Spreadsheet */}
+          <div className="bg-white rounded-2xl border-2 border-brutal p-3.5 flex items-center justify-between gap-3 shadow-neo-sm">
+            <div className="flex items-center gap-2.5">
+              <FileSpreadsheet className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <span className="text-xs font-black text-brutal block">
+                  Google Spreadsheet:
+                </span>
+                <span className="text-[11px] text-gray-500 font-medium truncate block">
+                  PENDATAAN PROGRESS HARIAN
+                </span>
+              </div>
             </div>
+            <a
+              href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSBzJBw7aSjz-Tqn_pDUdxPKGDW1RM_UiEDBdWNl83BxLKgnCQIzjNE7MCK2NjI0--K1cLZEA9uTlDP/pubhtml?gid=1897439068&single=true"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-2.5 py-1 text-[11px] font-black flex items-center gap-1 flex-shrink-0"
+            >
+              Buka <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
-          <a
-            href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSBzJBw7aSjz-Tqn_pDUdxPKGDW1RM_UiEDBdWNl83BxLKgnCQIzjNE7MCK2NjI0--K1cLZEA9uTlDP/pubhtml?gid=1897439068&single=true"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-3 py-1.5 text-xs font-black flex items-center gap-1.5"
-          >
-            Buka Spreadsheet <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+
+          {/* Drive Folder */}
+          <div className="bg-white rounded-2xl border-2 border-brutal p-3.5 flex items-center justify-between gap-3 shadow-neo-sm">
+            <div className="flex items-center gap-2.5">
+              <HardDrive className="w-5 h-5 text-blue-600 flex-shrink-0" />
+              <div className="min-w-0">
+                <span className="text-xs font-black text-brutal block">
+                  Google Drive Foto:
+                </span>
+                <span className="text-[11px] text-gray-500 font-medium truncate block">
+                  Folder TEAM 1&2, TEAM 3, TEAM4
+                </span>
+              </div>
+            </div>
+            <a
+              href="https://drive.google.com/drive/folders/18q1anXDV3cHJT56ooKunFgEumFmbaUM3?usp=sharing"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="neo-btn bg-pastel-blue hover:bg-sky-300 text-brutal px-2.5 py-1 text-[11px] font-black flex items-center gap-1 flex-shrink-0"
+            >
+              Drive <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
         </div>
       </div>
 

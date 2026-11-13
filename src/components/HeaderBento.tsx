@@ -86,18 +86,18 @@ export const HeaderBento: React.FC<Props> = ({
           <span className="pill-badge bg-brutal text-pastel-pink">
             <Users className="w-3.5 h-3.5" /> TIM PELAKSANA
           </span>
-          <span className="text-xs font-black uppercase tracking-wider text-brutal/70">
-            {tim ? `Terpilih: TIM ${tim}` : 'Pilih Tim'}
+          <span className="text-xs font-black uppercase tracking-wider text-brutal">
+            {tim ? `Terpilih: ${tim}` : 'Pilih Tim'}
           </span>
         </div>
 
         <div>
-          <label className="block text-xs font-black uppercase text-brutal mb-1.5 tracking-wider">
-            Pilih atau Masukkan TIM
+          <label className="block text-xs font-black uppercase text-brutal mb-2 tracking-wider">
+            Pilih TIM Pelaksana:
           </label>
           
-          {/* Preset Buttons */}
-          <div className="flex flex-wrap gap-1.5 mb-2">
+          {/* 3 TIM Buttons */}
+          <div className="grid grid-cols-3 gap-2 mb-2">
             {TIM_PRESETS.map((t) => {
               const isSelected = tim === t.id;
               return (
@@ -107,7 +107,7 @@ export const HeaderBento: React.FC<Props> = ({
                   onClick={() => {
                     setTim(t.id);
                   }}
-                  className={`neo-btn px-2.5 py-1 text-xs font-black transition-all ${
+                  className={`neo-btn py-2 text-center text-xs font-black transition-all ${
                     isSelected
                       ? 'bg-brutal text-white shadow-neo-sm translate-x-[1px] translate-y-[1px]'
                       : 'bg-white hover:bg-gray-100 text-brutal'
@@ -118,24 +118,10 @@ export const HeaderBento: React.FC<Props> = ({
               );
             })}
           </div>
-
-          {/* Custom TIM Input */}
-          {(tim === 'custom' || !TIM_PRESETS.some(p => p.id === tim)) && (
-            <input
-              type="text"
-              value={customTim}
-              onChange={(e) => {
-                setCustomTim(e.target.value);
-                setTim(e.target.value);
-              }}
-              placeholder="Ketik nama / gabungan tim (cth: TIM 1 dan 2)..."
-              className="w-full neo-input px-3 py-2 text-sm font-bold text-brutal mt-1"
-            />
-          )}
         </div>
 
-        <div className="mt-2 text-[11px] font-bold text-gray-700">
-          Tim pelaksana kegiatan pendataan harian di lapangan & studio.
+        <div className="mt-2 text-[11px] font-bold text-gray-700 bg-white/60 p-2 rounded-xl border border-brutal/20">
+          Folder Drive Target: <b>{TIM_PRESETS.find(p => p.id === tim)?.folderName || 'TEAM 1&2'}</b>
         </div>
       </div>
 

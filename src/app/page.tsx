@@ -46,7 +46,7 @@ export default function Home() {
   
   // Header state
   const [hariTanggal, setHariTanggal] = useState<string>('');
-  const [tim, setTim] = useState<string>('1');
+  const [tim, setTim] = useState<string>('TIM 1&2');
   const [customTim, setCustomTim] = useState<string>('');
 
   // Dynamic Kecamatan list
