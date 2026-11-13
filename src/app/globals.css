@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --canvas-bg: #F6F5F0;
+  --brutal-black: #111111;
+}
+
+body {
+  background-color: var(--canvas-bg);
+  color: var(--brutal-black);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Neo-Brutalist Utilities */
+@layer components {
+  .neo-box {
+    border: 2px solid #111111;
+    border-radius: 1rem;
+    box-shadow: 4px 4px 0px #111111;
+  }
+
+  .neo-box-sm {
+    border: 2px solid #111111;
+    border-radius: 0.75rem;
+    box-shadow: 2px 2px 0px #111111;
+  }
+
+  .neo-box-lg {
+    border: 3px solid #111111;
+    border-radius: 1.25rem;
+    box-shadow: 6px 6px 0px #111111;
+  }
+
+  .neo-btn {
+    border: 2px solid #111111;
+    border-radius: 1rem;
+    box-shadow: 4px 4px 0px #111111;
+    font-weight: 800;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .neo-btn:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px #111111;
+  }
+
+  .neo-btn:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px #111111;
+  }
+
+  .neo-input {
+    border: 2px solid #111111;
+    border-radius: 0.75rem;
+    box-shadow: 3px 3px 0px #111111;
+    background-color: #FFFFFF;
+    font-weight: 600;
+    transition: all 0.15s ease;
+  }
+
+  .neo-input:focus {
+    outline: none;
+    background-color: #FEF9C3;
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0px #111111;
+  }
+
+  .pill-badge {
+    background-color: #111111;
+    color: #FFFFFF;
+    border-radius: 9999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #E5E4DE;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #111111;
+  border-radius: 4px;
+}
+
+/* Pattern background for subtle neobrutalist vibe */
+.bg-grid-pattern {
+  background-size: 24px 24px;
+  background-image: 
+    linear-gradient(to right, rgba(17, 17, 17, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(17, 17, 17, 0.05) 1px, transparent 1px);
+}
