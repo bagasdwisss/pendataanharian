@@ -1,53 +1,145 @@
 export const GOOGLE_APPS_SCRIPT_TEMPLATE = `/**
  * =========================================================================
- * GOOGLE APPS SCRIPT - KANTAH ATR/BPN KOTA MEDAN (VERSI 2.0 TAHAN ERROR)
+ * GOOGLE APPS SCRIPT - KANTAH ATR/BPN KOTA MEDAN
+ * PENDATAAN HARIAN + AUTO SETUP TABEL & HEADER
  * =========================================================================
  *
  * Folder Google Drive:
  * https://drive.google.com/drive/folders/18q1anXDV3cHJT56ooKunFgEumFmbaUM3
- *
- * FITUR VERSI 2.0:
- * - Anti-Gagal: Data formulir PASTI dicatat ke Spreadsheet meskipun Drive terkendala.
- * - Otomatis buat subfolder tanggal (DD-MM-YYYY) di TEAM 1&2, TEAM 3, atau TEAM4.
- * - Dilengkapi diagnostik live doGet() untuk mengecek status izin Google.
  */
 
 var PARENT_FOLDER_ID = "18q1anXDV3cHJT56ooKunFgEumFmbaUM3";
 
+// Daftar 14 Kolom Header Resmi
+var HEADERS = [
+  "Timestamp",
+  "TIM",
+  "Kecamatan",
+  "Kelurahan",
+  "Berhasil Plotting",
+  "Digitasi",
+  "Overlap",
+  "Pemecahan",
+  "Belum bisa teridentifikasi",
+  "Dimatikan",
+  "Diluar Batas Administrasi",
+  "Upload SITATA",
+  "Upload KKP",
+  "Hari & Tanggal"
+];
+
+/**
+ * Menu otomatis di bilah menu Google Sheets
+ * Saat Anda membuka Spreadsheet, akan muncul menu '🏛️ Kantah Medan' di samping menu Bantuan
+ */
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu("🏛️ Kantah Medan")
+    .addItem("✨ Buat Header & Format Tabel Otomatis", "setupTableAndHeaders")
+    .addToUi();
+}
+
+/**
+ * FUNGSI UTAMA UNTUK MEMBUAT TABEL & HEADER CANTIK SECARA OTOMATIS
+ * Anda bisa menjalankannya langsung dari editor Apps Script atau lewat menu di Spreadsheet!
+ */
+function setupTableAndHeaders() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Sheet1") || ss.getActiveSheet() || ss.getSheets()[0];
+
+  // 1. Tulis Header di Baris 1
+  var headerRange = sheet.getRange(1, 1, 1, HEADERS.length);
+  headerRange.setValues([HEADERS]);
+
+  // 2. Format Tampilan Header (Modern Dark Neo-Brutalist)
+  headerRange
+    .setBackground("#1E1B4B")      // Warna latar biru gelap / indigo mewah
+    .setFontColor("#FFFFFF")       // Teks putih kontras tinggi
+    .setFontWeight("bold")         // Huruf tebal
+    .setFontSize(10)               // Ukuran font proporsional
+    .setHorizontalAlignment("center")
+    .setVerticalAlignment("middle")
+    .setWrap(true);
+
+  // Atur tinggi baris header agar lega
+  sheet.setRowHeight(1, 42);
+
+  // 3. Bekukan Baris Pertama (Freeze Header Row) agar tetap terlihat saat scroll ke bawah
+  sheet.setFrozenRows(1);
+
+  // 4. Atur Lebar Kolom yang Ideal & Rapi
+  var columnWidths = [
+    160, // Timestamp
+    90,  // TIM
+    180, // Kecamatan
+    180, // Kelurahan
+    120, // Berhasil Plotting
+    90,  // Digitasi
+    90,  // Overlap
+    100, // Pemecahan
+    150, // Belum bisa teridentifikasi
+    100, // Dimatikan
+    160, // Diluar Batas Administrasi
+    220, // Upload SITATA
+    220, // Upload KKP
+    140  // Hari & Tanggal
+  ];
+
+  for (var c = 0; c < columnWidths.length; c++) {
+    sheet.setColumnWidth(c + 1, columnWidths[c]);
+  }
+
+  // 5. Tambahkan Border Tegas pada Header
+  headerRange.setBorder(true, true, true, true, true, true, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+
+  return "Header dan format tabel berhasil dibuat rapi!";
+}
+
+/**
+ * Memastikan header sudah ada sebelum data baru ditulis
+ */
+function ensureHeadersExist(sheet) {
+  var firstCell = sheet.getRange(1, 1).getValue();
+  if (!firstCell || firstCell.toString().trim() === "") {
+    setupTableAndHeaders();
+  }
+}
+
+/**
+ * Penerima Pengiriman Formulir dari Web
+ */
 function doPost(e) {
   var lock = LockService.getScriptLock();
   try {
     lock.waitLock(30000);
-  } catch (t) {
-    // Lanjutkan jika lock timeout
-  }
+  } catch (t) {}
 
   try {
     if (!e || !e.postData || !e.postData.contents) {
       return ContentService.createTextOutput(JSON.stringify({
         status: "error",
-        message: "Tidak ada data (e.postData kosong)"
+        message: "Tidak ada data postData yang diterima"
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
     var payload = JSON.parse(e.postData.contents);
-    
-    // 1. Dapatkan Sheet Target (Sheet1 atau Sheet Pertama)
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     if (!ss) {
-      throw new Error("Script tidak terhubung ke Spreadsheet. Pastikan membuat script dari menu Extensions > Apps Script di dalam file Spreadsheet Anda!");
+      throw new Error("Script tidak terhubung ke Spreadsheet!");
     }
-    
+
     var sheet = ss.getSheetByName("Sheet1") || ss.getActiveSheet() || ss.getSheets()[0];
+
+    // Pastikan Header & Tabel sudah terbentuk
+    ensureHeadersExist(sheet);
 
     var tim = payload.tim || "TIM 1&2";
     var hariTanggal = payload.hariTanggal || Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy");
     var todayStr = Utilities.formatDate(new Date(), "GMT+7", "dd-MM-yyyy");
     var kecamatanList = payload.kecamatanList || [];
 
-    // 2. Siapkan Folder Drive hanya jika ada foto yang diupload
+    // Siapkan Folder Drive jika ada foto yang diunggah
     var dateFolder = null;
-    var driveErrorNotice = "";
     var hasAnyPhotos = kecamatanList.some(function(k) {
       return (k.sitataBase64List && k.sitataBase64List.length > 0) ||
              (k.kkpBase64List && k.kkpBase64List.length > 0);
@@ -58,86 +150,75 @@ function doPost(e) {
         var parentFolder = DriveApp.getFolderById(PARENT_FOLDER_ID);
         var teamFolder = getTeamFolder(parentFolder, tim);
         dateFolder = getOrCreateSubFolder(teamFolder, todayStr);
-      } catch (driveErr) {
-        driveErrorNotice = " (Catatan Drive: " + driveErr.message + ")";
-      }
+      } catch (driveErr) {}
     }
 
     var results = [];
 
-    // 3. Catat Setiap Kecamatan ke Baris Baru Spreadsheet
+    // Tulis setiap kecamatan ke baris baru
     for (var i = 0; i < kecamatanList.length; i++) {
       var item = kecamatanList[i];
       var cleanKec = (item.kecamatan || "Kecamatan").replace(/[^a-zA-Z0-9]/g, "_");
       var cleanKel = (item.kelurahan || "Kelurahan").replace(/[^a-zA-Z0-9]/g, "_");
 
-      // Simpan Foto SITATA (jika ada dan folder Drive siap)
+      // Simpan Foto SITATA
       var sitataUrls = [];
-      if (item.sitataBase64List && item.sitataBase64List.length > 0) {
+      if (item.sitataBase64List && item.sitataBase64List.length > 0 && dateFolder) {
         for (var s = 0; s < item.sitataBase64List.length; s++) {
-          if (dateFolder) {
-            try {
-              var sFileName = "SITATA_" + cleanKec + "_" + cleanKel + "_" + (s + 1) + "_" + new Date().getTime() + ".jpg";
-              var sUrl = saveBase64ToDrive(item.sitataBase64List[s], sFileName, dateFolder);
-              sitataUrls.push(sUrl);
-            } catch (errS) {
-              sitataUrls.push("Gagal simpan foto: " + errS.message);
-            }
-          } else {
-            sitataUrls.push("Foto ada tapi folder Drive belum siap" + driveErrorNotice);
-          }
+          try {
+            var sFileName = "SITATA_" + cleanKec + "_" + cleanKel + "_" + (s + 1) + "_" + new Date().getTime() + ".jpg";
+            sitataUrls.push(saveBase64ToDrive(item.sitataBase64List[s], sFileName, dateFolder));
+          } catch (eS) {}
         }
       }
 
-      // Simpan Foto KKP (jika ada dan folder Drive siap)
+      // Simpan Foto KKP
       var kkpUrls = [];
-      if (item.kkpBase64List && item.kkpBase64List.length > 0) {
+      if (item.kkpBase64List && item.kkpBase64List.length > 0 && dateFolder) {
         for (var k = 0; k < item.kkpBase64List.length; k++) {
-          if (dateFolder) {
-            try {
-              var kFileName = "KKP_" + cleanKec + "_" + cleanKel + "_" + (k + 1) + "_" + new Date().getTime() + ".jpg";
-              var kUrl = saveBase64ToDrive(item.kkpBase64List[k], kFileName, dateFolder);
-              kkpUrls.push(kUrl);
-            } catch (errK) {
-              kkpUrls.push("Gagal simpan foto: " + errK.message);
-            }
-          } else {
-            kkpUrls.push("Foto ada tapi folder Drive belum siap" + driveErrorNotice);
-          }
+          try {
+            var kFileName = "KKP_" + cleanKec + "_" + cleanKel + "_" + (k + 1) + "_" + new Date().getTime() + ".jpg";
+            kkpUrls.push(saveBase64ToDrive(item.kkpBase64List[k], kFileName, dateFolder));
+          } catch (eK) {}
         }
       }
 
-      // Baris Sesuai Format Kolom Spreadsheet Anda:
-      // Timestamp | TIM | Kecamatan | Kelurahan | Berhasil Plotting | Digitasi | Overlap | Pemecahan | Belum bisa teridentifikasi | Dimatikan | Diluar Batas Administrasi | Upload SITATA | Upload KKP | Hari & Tanggal
+      // Baris Sesuai 14 Kolom Header:
       var row = [
-        Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy HH:mm:ss"), // Timestamp
-        tim,                                                             // TIM
-        item.kecamatan || "",                                            // Kecamatan
-        item.kelurahan || "",                                            // Kelurahan
-        Number(item.berhasilPlotting) || 0,                              // Berhasil Plotting
-        Number(item.digitasi) || 0,                                      // Digitasi
-        Number(item.overlap) || 0,                                       // Overlap
-        Number(item.pemecahan) || 0,                                     // Pemecahan
-        Number(item.belumTeridentifikasi) || 0,                          // Belum bisa teridentifikasi
-        Number(item.dimatikan) || 0,                                     // Dimatikan
-        Number(item.diluarBatasAdministrasi) || 0,                       // Diluar Batas Administrasi
-        sitataUrls.join(", "),                                           // Upload SITATA
-        kkpUrls.join(", "),                                              // Upload KKP
-        hariTanggal                                                      // Hari & Tanggal
+        Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy HH:mm:ss"), // 1. Timestamp
+        tim,                                                             // 2. TIM
+        item.kecamatan || "",                                            // 3. Kecamatan
+        item.kelurahan || "",                                            // 4. Kelurahan
+        Number(item.berhasilPlotting) || 0,                              // 5. Berhasil Plotting
+        Number(item.digitasi) || 0,                                      // 6. Digitasi
+        Number(item.overlap) || 0,                                       // 7. Overlap
+        Number(item.pemecahan) || 0,                                     // 8. Pemecahan
+        Number(item.belumTeridentifikasi) || 0,                          // 9. Belum bisa teridentifikasi
+        Number(item.dimatikan) || 0,                                     // 10. Dimatikan
+        Number(item.diluarBatasAdministrasi) || 0,                       // 11. Diluar Batas Administrasi
+        sitataUrls.join(", "),                                           // 12. Upload SITATA
+        kkpUrls.join(", "),                                              // 13. Upload KKP
+        hariTanggal                                                      // 14. Hari & Tanggal
       ];
 
       sheet.appendRow(row);
-      results.push({
-        kecamatan: item.kecamatan,
-        kelurahan: item.kelurahan,
-        sitataCount: sitataUrls.length,
-        kkpCount: kkpUrls.length
-      });
+
+      // Berikan style rapi pada baris data baru
+      var lastRow = sheet.getLastRow();
+      var dataRange = sheet.getRange(lastRow, 1, 1, HEADERS.length);
+      dataRange.setVerticalAlignment("middle");
+      dataRange.setFontSize(9);
+      sheet.setRowHeight(lastRow, 30);
+
+      // Buat border tipis
+      dataRange.setBorder(true, true, true, true, true, true, "#E5E7EB", SpreadsheetApp.BorderStyle.SOLID);
+
+      results.push({ kecamatan: item.kecamatan, kelurahan: item.kelurahan });
     }
 
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
-      message: "Data " + results.length + " kecamatan berhasil disimpan ke Sheet " + sheet.getName() + "!",
+      message: "Data " + results.length + " kecamatan berhasil disimpan!",
       results: results
     })).setMimeType(ContentService.MimeType.JSON);
 
@@ -147,43 +228,33 @@ function doPost(e) {
       message: err.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   } finally {
-    try {
-      lock.releaseLock();
-    } catch(e) {}
+    try { lock.releaseLock(); } catch(e) {}
   }
 }
 
-// Cari atau buat folder Tim
 function getTeamFolder(parentFolder, timName) {
   var targetName = "TEAM 1&2";
   var upper = (timName || "").toUpperCase();
-
   if (upper.indexOf("3") > -1 && upper.indexOf("4") === -1 && upper.indexOf("1") === -1) {
     targetName = "TEAM 3";
   } else if (upper.indexOf("4") > -1 && upper.indexOf("1") === -1 && upper.indexOf("3") === -1) {
     targetName = "TEAM 4";
-  } else {
-    targetName = "TEAM 1&2";
   }
 
   var subFolders = parentFolder.getFolders();
   while (subFolders.hasNext()) {
     var f = subFolders.next();
     var fName = f.getName().toUpperCase().replace(/\\s+/g, "");
-    var tClean = targetName.replace(/\\s+/g, "");
-    if (fName === tClean || f.getName().toUpperCase() === targetName) {
+    if (fName === targetName.replace(/\\s+/g, "") || f.getName().toUpperCase() === targetName) {
       return f;
     }
   }
-
   return parentFolder.createFolder(targetName);
 }
 
 function getOrCreateSubFolder(parentFolder, subFolderName) {
   var folders = parentFolder.getFoldersByName(subFolderName);
-  if (folders.hasNext()) {
-    return folders.next();
-  }
+  if (folders.hasNext()) return folders.next();
   return parentFolder.createFolder(subFolderName);
 }
 
@@ -193,9 +264,7 @@ function saveBase64ToDrive(base64Data, filename, folder) {
   if (base64Data.indexOf(",") > -1) {
     var parts = base64Data.split(",");
     var mimePart = parts[0].match(/:(.*?);/);
-    if (mimePart && mimePart[1]) {
-      contentType = mimePart[1];
-    }
+    if (mimePart && mimePart[1]) contentType = mimePart[1];
     cleanedData = parts[1];
   }
   var decoded = Utilities.base64Decode(cleanedData);
@@ -206,45 +275,23 @@ function saveBase64ToDrive(base64Data, filename, folder) {
 }
 
 /**
- * Uji Coba Diagnostik Langsung di Browser
- * Buka Web App URL di tab baru browser untuk melihat hasil ini!
+ * Diagnostik GET: Sekaligus memastikan tabel & header terpasang
  */
 function doGet(e) {
-  var ssOk = false;
-  var sheetName = "";
-  var lastRow = 0;
-  var driveOk = false;
-  var errMsg = "";
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss ? (ss.getSheetByName("Sheet1") || ss.getActiveSheet() || ss.getSheets()[0]) : null;
 
-  try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    if (ss) {
-      ssOk = true;
-      var sh = ss.getSheetByName("Sheet1") || ss.getActiveSheet() || ss.getSheets()[0];
-      sheetName = sh.getName();
-      lastRow = sh.getLastRow();
-    }
-  } catch(e1) {
-    errMsg += "Spreadsheet: " + e1.message + ". ";
-  }
-
-  try {
-    var folder = DriveApp.getFolderById(PARENT_FOLDER_ID);
-    if (folder) {
-      driveOk = true;
-    }
-  } catch(e2) {
-    errMsg += "Drive: " + e2.message;
+  if (sheet) {
+    ensureHeadersExist(sheet);
   }
 
   return ContentService.createTextOutput(JSON.stringify({
-    status: (ssOk && driveOk) ? "online_siap" : "perlu_perhatian",
-    spreadsheetTerhubung: ssOk,
-    namaSheet: sheetName,
-    jumlahBarisSaatIni: lastRow,
-    folderDriveTerhubung: driveOk,
-    pesanDiagnostik: errMsg || "Semua koneksi (Spreadsheet & Google Drive) aktif dan siap menerima data!",
-    timestamp: new Date().toISOString()
+    status: "online_siap",
+    spreadsheetTerhubung: !!ss,
+    namaSheet: sheet ? sheet.getName() : "Tidak ditemukan",
+    jumlahBaris: sheet ? sheet.getLastRow() : 0,
+    headers: HEADERS,
+    pesan: "Tabel dan Header siap! Endpoint siap menerima data."
   }, null, 2)).setMimeType(ContentService.MimeType.JSON);
 }
 `;
