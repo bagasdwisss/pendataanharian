@@ -48,13 +48,28 @@ export const GoogleSheetModal: React.FC<Props> = ({
     setTestMsg('Menghubungi endpoint Google Apps Script...');
 
     try {
-      // Test GET
-      const res = await fetch(inputUrl.trim(), { method: 'GET', mode: 'no-cors' });
-      setTestStatus('success');
-      setTestMsg('Koneksi endpoint terdeteksi aktif!');
+      // Direct GET to test diagnostics
+      const res = await fetch(inputUrl.trim());
+      if (res.ok) {
+        const data = await res.json();
+        setTestStatus('success');
+        setTestMsg(
+          `✅ Endpoint Aktif! Sheet: "${data.namaSheet || 'Sheet1'}" (${data.jumlahBarisSaatIni || 0} baris saat ini). Drive: ${data.folderDriveTerhubung ? 'Terhubung' : 'Perlu Izin'}. ${data.pesanDiagnostik || ''}`
+        );
+      } else {
+        setTestStatus('error');
+        setTestMsg(`Status HTTP: ${res.status}. Pastikan deployment diset 'Who has access: Anyone'.`);
+      }
     } catch (err: any) {
-      setTestStatus('error');
-      setTestMsg('Gagal terhubung: ' + err.message);
+      // Fallback if blocked by CORS
+      try {
+        await fetch(inputUrl.trim(), { method: 'GET', mode: 'no-cors' });
+        setTestStatus('success');
+        setTestMsg('✅ Endpoint terdeteksi online! Klik tombol "Buka di Tab Baru" di bawah untuk memverifikasi izin akun.');
+      } catch (err2: any) {
+        setTestStatus('error');
+        setTestMsg('Gagal terhubung ke URL. Pastikan URL benar berakhiran /exec.');
+      }
     }
   };
 
@@ -169,8 +184,19 @@ export const GoogleSheetModal: React.FC<Props> = ({
               className="neo-btn bg-white hover:bg-gray-100 text-brutal px-3.5 py-2 text-xs font-black flex items-center gap-1.5"
             >
               <Sparkles className="w-4 h-4 text-amber-500" />
-              {testStatus === 'testing' ? 'Menguji...' : 'Uji Koneksi'}
+              {testStatus === 'testing' ? 'Menguji...' : 'Uji Koneksi Langsung'}
             </button>
+
+            {inputUrl && (
+              <a
+                href={inputUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="neo-btn bg-pastel-butter hover:bg-yellow-300 text-brutal px-3.5 py-2 text-xs font-black flex items-center gap-1.5"
+              >
+                <ExternalLink className="w-4 h-4" /> Buka URL di Tab Baru (Cek Izin)
+              </a>
+            )}
           </div>
 
           {testMsg && (

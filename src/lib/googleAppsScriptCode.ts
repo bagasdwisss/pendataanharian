@@ -1,100 +1,113 @@
 export const GOOGLE_APPS_SCRIPT_TEMPLATE = `/**
  * =========================================================================
- * GOOGLE APPS SCRIPT - KANTAH ATR/BPN KOTA MEDAN
- * PENDATAAN HARIAN PLOTTING, DIGITASI, SITATA, DAN KKP
+ * GOOGLE APPS SCRIPT - KANTAH ATR/BPN KOTA MEDAN (VERSI 2.0 TAHAN ERROR)
  * =========================================================================
  *
- * Folder Google Drive Induk:
+ * Folder Google Drive:
  * https://drive.google.com/drive/folders/18q1anXDV3cHJT56ooKunFgEumFmbaUM3
  *
- * Struktur Folder Otomatis:
- * [FOLDER INDUK] (18q1anXDV3cHJT56ooKunFgEumFmbaUM3)
- *   ├── TEAM 1&2
- *   │     └── [DD-MM-YYYY] (contoh: 13-11-2026) -> File Foto SITATA & KKP
- *   ├── TEAM 3
- *   │     └── [DD-MM-YYYY] -> File Foto SITATA & KKP
- *   └── TEAM4 (atau TEAM 4)
- *         └── [DD-MM-YYYY] -> File Foto SITATA & KKP
- *
- * CARA PEMASANGAN SCRIPT (HANYA 2 MENIT):
- * 1. Buka Google Spreadsheet Anda:
- *    https://docs.google.com/spreadsheets/d/e/2PACX-1vSBzJBw7aSjz-Tqn_pDUdxPKGDW1RM_UiEDBdWNl83BxLKgnCQIzjNE7MCK2NjI0--K1cLZEA9uTlDP/edit
- * 2. Di menu atas, klik 'Extensions' (Ekstensi) -> pilih 'Apps Script'.
- * 3. Hapus seluruh teks kode yang ada di editor Apps Script.
- * 4. Salin (copy) dan tempel (paste) SEMUA kode di bawah ini ke editor.
- * 5. Klik ikon Disket (Save project) di toolbar atas.
- * 6. Klik tombol biru 'Deploy' (Terapkan) di pojok kanan atas -> pilih 'New deployment' (Penerapan baru).
- * 7. Pada ikon gear (roda gigi) 'Select type', pastikan memilih 'Web app' (Aplikasi Web).
- * 8. Isi konfigurasi:
- *    - Description : Webhook Pendataan Harian
- *    - Execute as  : Me (akun email Anda)
- *    - Who has access : Anyone (Siapa saja)  <-- SANGAT PENTING agar form web bisa mengirim data!
- * 9. Klik 'Deploy'. Izinkan akses (Authorize Access) akun Google Anda jika diminta.
- * 10. Salin 'Web App URL' yang muncul (URL berakhiran '/exec').
- * 11. Buka aplikasi web Anda, masuk ke menu 'Koneksi Cloud & Drive', tempelkan URL tersebut, lalu klik 'Simpan Konfigurasi'.
+ * FITUR VERSI 2.0:
+ * - Anti-Gagal: Data formulir PASTI dicatat ke Spreadsheet meskipun Drive terkendala.
+ * - Otomatis buat subfolder tanggal (DD-MM-YYYY) di TEAM 1&2, TEAM 3, atau TEAM4.
+ * - Dilengkapi diagnostik live doGet() untuk mengecek status izin Google.
  */
 
-// ID Folder Utama Google Drive Anda
 var PARENT_FOLDER_ID = "18q1anXDV3cHJT56ooKunFgEumFmbaUM3";
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
-  lock.tryLock(30000);
+  try {
+    lock.waitLock(30000);
+  } catch (t) {
+    // Lanjutkan jika lock timeout
+  }
 
   try {
     if (!e || !e.postData || !e.postData.contents) {
       return ContentService.createTextOutput(JSON.stringify({
         status: "error",
-        message: "Tidak ada data yang diterima"
+        message: "Tidak ada data (e.postData kosong)"
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
     var payload = JSON.parse(e.postData.contents);
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    
+    // 1. Dapatkan Sheet Target (Sheet1 atau Sheet Pertama)
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) {
+      throw new Error("Script tidak terhubung ke Spreadsheet. Pastikan membuat script dari menu Extensions > Apps Script di dalam file Spreadsheet Anda!");
+    }
+    
+    var sheet = ss.getSheetByName("Sheet1") || ss.getActiveSheet() || ss.getSheets()[0];
 
-    // 1. Ambil Folder Induk
-    var parentFolder = DriveApp.getFolderById(PARENT_FOLDER_ID);
-
-    // 2. Tentukan Folder Tim (TEAM 1&2, TEAM 3, atau TEAM 4)
     var tim = payload.tim || "TIM 1&2";
-    var teamFolder = getTeamFolder(parentFolder, tim);
-
-    // 3. Buat Folder Tanggal Hari Ini di dalam Folder Tim masing-masing
-    // Format tanggal: DD-MM-YYYY (contoh: 13-11-2026)
-    var todayStr = Utilities.formatDate(new Date(), "GMT+7", "dd-MM-yyyy");
-    var dateFolder = getOrCreateSubFolder(teamFolder, todayStr);
-
     var hariTanggal = payload.hariTanggal || Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy");
+    var todayStr = Utilities.formatDate(new Date(), "GMT+7", "dd-MM-yyyy");
     var kecamatanList = payload.kecamatanList || [];
+
+    // 2. Siapkan Folder Drive hanya jika ada foto yang diupload
+    var dateFolder = null;
+    var driveErrorNotice = "";
+    var hasAnyPhotos = kecamatanList.some(function(k) {
+      return (k.sitataBase64List && k.sitataBase64List.length > 0) ||
+             (k.kkpBase64List && k.kkpBase64List.length > 0);
+    });
+
+    if (hasAnyPhotos) {
+      try {
+        var parentFolder = DriveApp.getFolderById(PARENT_FOLDER_ID);
+        var teamFolder = getTeamFolder(parentFolder, tim);
+        dateFolder = getOrCreateSubFolder(teamFolder, todayStr);
+      } catch (driveErr) {
+        driveErrorNotice = " (Catatan Drive: " + driveErr.message + ")";
+      }
+    }
+
     var results = [];
 
-    // 4. Proses Setiap Kecamatan & Simpan Foto Gabungan ke Subfolder Tanggal
+    // 3. Catat Setiap Kecamatan ke Baris Baru Spreadsheet
     for (var i = 0; i < kecamatanList.length; i++) {
       var item = kecamatanList[i];
       var cleanKec = (item.kecamatan || "Kecamatan").replace(/[^a-zA-Z0-9]/g, "_");
       var cleanKel = (item.kelurahan || "Kelurahan").replace(/[^a-zA-Z0-9]/g, "_");
 
-      // Simpan Foto SITATA
+      // Simpan Foto SITATA (jika ada dan folder Drive siap)
       var sitataUrls = [];
       if (item.sitataBase64List && item.sitataBase64List.length > 0) {
         for (var s = 0; s < item.sitataBase64List.length; s++) {
-          var sFileName = "SITATA_" + cleanKec + "_" + cleanKel + "_" + (s + 1) + "_" + new Date().getTime() + ".jpg";
-          var sUrl = saveBase64ToDrive(item.sitataBase64List[s], sFileName, dateFolder);
-          sitataUrls.push(sUrl);
+          if (dateFolder) {
+            try {
+              var sFileName = "SITATA_" + cleanKec + "_" + cleanKel + "_" + (s + 1) + "_" + new Date().getTime() + ".jpg";
+              var sUrl = saveBase64ToDrive(item.sitataBase64List[s], sFileName, dateFolder);
+              sitataUrls.push(sUrl);
+            } catch (errS) {
+              sitataUrls.push("Gagal simpan foto: " + errS.message);
+            }
+          } else {
+            sitataUrls.push("Foto ada tapi folder Drive belum siap" + driveErrorNotice);
+          }
         }
       }
 
-      // Simpan Foto KKP
+      // Simpan Foto KKP (jika ada dan folder Drive siap)
       var kkpUrls = [];
       if (item.kkpBase64List && item.kkpBase64List.length > 0) {
         for (var k = 0; k < item.kkpBase64List.length; k++) {
-          var kFileName = "KKP_" + cleanKec + "_" + cleanKel + "_" + (k + 1) + "_" + new Date().getTime() + ".jpg";
-          var kUrl = saveBase64ToDrive(item.kkpBase64List[k], kFileName, dateFolder);
-          kkpUrls.push(kUrl);
+          if (dateFolder) {
+            try {
+              var kFileName = "KKP_" + cleanKec + "_" + cleanKel + "_" + (k + 1) + "_" + new Date().getTime() + ".jpg";
+              var kUrl = saveBase64ToDrive(item.kkpBase64List[k], kFileName, dateFolder);
+              kkpUrls.push(kUrl);
+            } catch (errK) {
+              kkpUrls.push("Gagal simpan foto: " + errK.message);
+            }
+          } else {
+            kkpUrls.push("Foto ada tapi folder Drive belum siap" + driveErrorNotice);
+          }
         }
       }
 
-      // Susun Baris Data Sesuai Kolom Spreadsheet Anda:
+      // Baris Sesuai Format Kolom Spreadsheet Anda:
       // Timestamp | TIM | Kecamatan | Kelurahan | Berhasil Plotting | Digitasi | Overlap | Pemecahan | Belum bisa teridentifikasi | Dimatikan | Diluar Batas Administrasi | Upload SITATA | Upload KKP | Hari & Tanggal
       var row = [
         Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy HH:mm:ss"), // Timestamp
@@ -108,8 +121,8 @@ function doPost(e) {
         Number(item.belumTeridentifikasi) || 0,                          // Belum bisa teridentifikasi
         Number(item.dimatikan) || 0,                                     // Dimatikan
         Number(item.diluarBatasAdministrasi) || 0,                       // Diluar Batas Administrasi
-        sitataUrls.join(", "),                                           // Upload SITATA (Link Foto Drive)
-        kkpUrls.join(", "),                                              // Upload KKP (Link Foto Drive)
+        sitataUrls.join(", "),                                           // Upload SITATA
+        kkpUrls.join(", "),                                              // Upload KKP
         hariTanggal                                                      // Hari & Tanggal
       ];
 
@@ -124,7 +137,7 @@ function doPost(e) {
 
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
-      message: "Data " + results.length + " kecamatan dan foto berhasil disimpan ke Folder " + teamFolder.getName() + "/" + todayStr + " dan Google Sheets!",
+      message: "Data " + results.length + " kecamatan berhasil disimpan ke Sheet " + sheet.getName() + "!",
       results: results
     })).setMimeType(ContentService.MimeType.JSON);
 
@@ -134,11 +147,13 @@ function doPost(e) {
       message: err.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   } finally {
-    lock.releaseLock();
+    try {
+      lock.releaseLock();
+    } catch(e) {}
   }
 }
 
-// Mencari folder tim yang cocok di dalam Google Drive
+// Cari atau buat folder Tim
 function getTeamFolder(parentFolder, timName) {
   var targetName = "TEAM 1&2";
   var upper = (timName || "").toUpperCase();
@@ -151,7 +166,6 @@ function getTeamFolder(parentFolder, timName) {
     targetName = "TEAM 1&2";
   }
 
-  // Cari folder yang cocok (mendukung "TEAM 4" atau "TEAM4")
   var subFolders = parentFolder.getFolders();
   while (subFolders.hasNext()) {
     var f = subFolders.next();
@@ -162,7 +176,6 @@ function getTeamFolder(parentFolder, timName) {
     }
   }
 
-  // Jika belum ada, buat foldernya
   return parentFolder.createFolder(targetName);
 }
 
@@ -192,12 +205,46 @@ function saveBase64ToDrive(base64Data, filename, folder) {
   return file.getUrl();
 }
 
+/**
+ * Uji Coba Diagnostik Langsung di Browser
+ * Buka Web App URL di tab baru browser untuk melihat hasil ini!
+ */
 function doGet(e) {
+  var ssOk = false;
+  var sheetName = "";
+  var lastRow = 0;
+  var driveOk = false;
+  var errMsg = "";
+
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (ss) {
+      ssOk = true;
+      var sh = ss.getSheetByName("Sheet1") || ss.getActiveSheet() || ss.getSheets()[0];
+      sheetName = sh.getName();
+      lastRow = sh.getLastRow();
+    }
+  } catch(e1) {
+    errMsg += "Spreadsheet: " + e1.message + ". ";
+  }
+
+  try {
+    var folder = DriveApp.getFolderById(PARENT_FOLDER_ID);
+    if (folder) {
+      driveOk = true;
+    }
+  } catch(e2) {
+    errMsg += "Drive: " + e2.message;
+  }
+
   return ContentService.createTextOutput(JSON.stringify({
-    status: "online",
-    service: "Kantah Medan Pendataan Harian Endpoint",
-    driveFolderId: PARENT_FOLDER_ID,
+    status: (ssOk && driveOk) ? "online_siap" : "perlu_perhatian",
+    spreadsheetTerhubung: ssOk,
+    namaSheet: sheetName,
+    jumlahBarisSaatIni: lastRow,
+    folderDriveTerhubung: driveOk,
+    pesanDiagnostik: errMsg || "Semua koneksi (Spreadsheet & Google Drive) aktif dan siap menerima data!",
     timestamp: new Date().toISOString()
-  })).setMimeType(ContentService.MimeType.JSON);
+  }, null, 2)).setMimeType(ContentService.MimeType.JSON);
 }
 `;

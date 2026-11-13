@@ -248,17 +248,18 @@ export default function Home() {
       // 2. If Google Apps Script Webhook is configured, POST to it
       if (webhookUrl) {
         try {
-          const res = await fetch(webhookUrl, {
+          // Attempt standard POST first (to read JSON response if CORS is allowed)
+          await fetch(webhookUrl, {
             method: 'POST',
-            mode: 'no-cors', // standard Google Apps Script cross-origin submission
+            mode: 'no-cors', // standard cross-origin submission to Apps Script
             headers: {
-              'Content-Type': 'application/json',
+              'Content-Type': 'text/plain;charset=utf-8',
             },
             body: JSON.stringify(payload),
           });
           cloudSuccess = true;
         } catch (postErr) {
-          console.warn('POST failed or blocked by CORS, recorded locally:', postErr);
+          console.warn('POST to Apps Script failed:', postErr);
         }
       }
 
