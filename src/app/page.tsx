@@ -585,15 +585,22 @@ export default function Home() {
                 <h4 className="text-base font-black text-brutal">
                   Data {kecamatanList.length} Kecamatan Siap Dikirim
                 </h4>
-                <p className="text-xs text-gray-600 font-bold max-w-md mx-auto mt-1">
-                  Seluruh data angka dan foto akan diproses. Anda dapat langsung mengklik tombol melayang di pojok kanan bawah untuk mengirim tanpa perlu menggulir ke bawah.
+                <p className="text-xs text-gray-600 font-bold max-w-md mx-auto mt-1 mb-3">
+                  Seluruh data angka dan foto akan diproses. Anda dapat langsung mengklik tombol melayang di pojok kanan bawah untuk mengirim progress harian.
                 </p>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('summary')}
+                  className="neo-btn bg-canvas hover:bg-gray-100 text-brutal px-4 py-2 text-xs font-black inline-flex items-center gap-2"
+                >
+                  <Share2 className="w-4 h-4 text-emerald-700" /> Pratinjau Teks Laporan WhatsApp
+                </button>
               </div>
 
               {/* Floating Bottom-Right Submit Action Bar */}
-              <div className="fixed bottom-3 right-3 left-3 sm:left-auto sm:bottom-6 sm:right-6 z-40 max-w-xl">
-                <div className="rounded-2xl sm:rounded-3xl border-3 border-brutal bg-white/95 backdrop-blur-md p-3 sm:p-4 shadow-neo-xl flex items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-5 duration-300">
-                  <div className="hidden md:block min-w-0 pr-1">
+              <div className="fixed bottom-3 right-3 left-3 sm:left-auto sm:bottom-6 sm:right-6 z-40 max-w-md">
+                <div className="rounded-2xl sm:rounded-3xl border-3 border-brutal bg-white/95 backdrop-blur-md p-2.5 sm:p-3 shadow-neo-xl flex items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-5 duration-300">
+                  <div className="hidden sm:block min-w-0 pl-1 pr-2">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <span className="pill-badge bg-brutal text-pastel-matcha text-[9px] py-0 px-2 font-black">
                         FINALISASI DATA
@@ -607,28 +614,16 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('summary')}
-                      className="neo-btn bg-canvas hover:bg-gray-100 text-brutal px-3 py-2 sm:px-3.5 sm:py-2.5 text-xs font-black flex items-center gap-1.5 shadow-neo-sm flex-shrink-0"
-                      title="Pratinjau Teks WhatsApp"
-                    >
-                      <Share2 className="w-4 h-4 text-emerald-700" />
-                      <span className="hidden xs:inline sm:inline">Pratinjau WA</span>
-                    </button>
-
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-4 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-neo-lg disabled:opacity-50 flex-1 sm:flex-initial"
-                    >
-                      <Send className="w-4 h-4 flex-shrink-0" />
-                      <span className="truncate">
-                        {isSubmitting ? 'Memproses...' : '🚀 KIRIM PROGRESS HARIAN'}
-                      </span>
-                    </button>
-                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full sm:w-auto neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-5 sm:px-7 py-3 text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-neo-lg disabled:opacity-50 flex-shrink-0"
+                  >
+                    <Send className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">
+                      {isSubmitting ? 'Memproses...' : '🚀 KIRIM PROGRESS HARIAN'}
+                    </span>
+                  </button>
                 </div>
               </div>
 
