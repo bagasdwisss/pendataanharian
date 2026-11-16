@@ -23,8 +23,10 @@ import {
   FileSpreadsheet,
   FolderArchive,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Menu
 } from 'lucide-react';
+import { DEFAULT_WEBHOOK_URL } from '@/lib/kantahData';
 
 const createDefaultKecamatan = (kecamatanName: string = 'Medan Helvetia'): KecamatanData => ({
   id: Math.random().toString(36).substring(2, 9),
@@ -54,12 +56,13 @@ export default function Home() {
     createDefaultKecamatan('Medan Helvetia'),
   ]);
 
-  // Cloud & History state
-  const [webhookUrl, setWebhookUrl] = useState<string>('');
+  // Cloud & History state (Hardcoded default URL)
+  const [webhookUrl, setWebhookUrl] = useState<string>(DEFAULT_WEBHOOK_URL);
   const [history, setHistory] = useState<SubmissionHistoryItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isDownloadingZip, setIsDownloadingZip] = useState<boolean>(false);
   const [submitSuccessMsg, setSubmitSuccessMsg] = useState<string | null>(null);
+  const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false);
 
   // Initialize date on mount
   useEffect(() => {
@@ -71,10 +74,13 @@ export default function Home() {
     const y = now.getFullYear();
     setHariTanggal(`${day}, ${d}/${m}/${y}`);
 
-    // Load saved webhook and history from localStorage
+    // Load saved webhook and history from localStorage (always fallback to hardcoded default)
     const savedWebhook = localStorage.getItem('kantah_medan_webhook_url');
-    if (savedWebhook) {
-      setWebhookUrl(savedWebhook);
+    if (savedWebhook && savedWebhook.trim().length > 0) {
+      setWebhookUrl(savedWebhook.trim());
+    } else {
+      setWebhookUrl(DEFAULT_WEBHOOK_URL);
+      localStorage.setItem('kantah_medan_webhook_url', DEFAULT_WEBHOOK_URL);
     }
     const savedHistory = localStorage.getItem('kantah_medan_history');
     if (savedHistory) {
@@ -322,7 +328,36 @@ export default function Home() {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-canvas bg-grid-pattern">
-      {/* Split-Tone Dark Sidebar */}
+      {/* Sticky Mobile Top Header (Screens < lg) */}
+      <div className="lg:hidden sticky top-0 z-30 bg-sidebar-bg text-white border-b-3 border-brutal px-4 py-3 flex items-center justify-between shadow-neo">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl border-2 border-brutal bg-pastel-butter flex items-center justify-center text-brutal font-black text-base shadow-neo-sm">
+            🏛️
+          </div>
+          <div>
+            <div className="pill-badge bg-pastel-matcha text-brutal text-[8px] py-0 px-1.5 font-black">
+              ATR/BPN MEDAN
+            </div>
+            <span className="font-black text-xs block leading-tight text-white mt-0.5">
+              PENDATAAN HARIAN
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="Terkoneksi"></span>
+          <button
+            type="button"
+            onClick={() => setIsMobileOpen(true)}
+            className="neo-btn bg-pastel-butter hover:bg-yellow-300 text-brutal px-3 py-1.5 text-xs font-black flex items-center gap-1.5 shadow-neo-sm"
+          >
+            <Menu className="w-4 h-4" />
+            Menu
+          </button>
+        </div>
+      </div>
+
+      {/* Split-Tone Dark Sidebar (Docked on Desktop, Off-Canvas Drawer on Mobile) */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -331,6 +366,8 @@ export default function Home() {
         onDownloadZip={handleDownloadZip}
         isDownloadingZip={isDownloadingZip}
         cloudConnected={!!webhookUrl}
+        isMobileOpen={isMobileOpen}
+        onCloseMobile={() => setIsMobileOpen(false)}
       />
 
       {/* Main Canvas Content */}

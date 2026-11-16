@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GOOGLE_APPS_SCRIPT_TEMPLATE } from '@/lib/googleAppsScriptCode';
+import { DEFAULT_WEBHOOK_URL } from '@/lib/kantahData';
 import { 
   Cloud, 
   Copy, 
@@ -11,7 +12,8 @@ import {
   HelpCircle, 
   Sparkles, 
   FileSpreadsheet,
-  HardDrive
+  HardDrive,
+  RotateCcw
 } from 'lucide-react';
 
 interface Props {
@@ -23,10 +25,16 @@ export const GoogleSheetModal: React.FC<Props> = ({
   webhookUrl,
   onSaveWebhookUrl,
 }) => {
-  const [inputUrl, setInputUrl] = useState(webhookUrl);
+  const [inputUrl, setInputUrl] = useState(webhookUrl || DEFAULT_WEBHOOK_URL);
   const [copied, setCopied] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMsg, setTestMsg] = useState('');
+
+  useEffect(() => {
+    if (webhookUrl) {
+      setInputUrl(webhookUrl);
+    }
+  }, [webhookUrl]);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_TEMPLATE);
@@ -175,6 +183,18 @@ export const GoogleSheetModal: React.FC<Props> = ({
               className="neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-4 py-2 text-xs font-black flex items-center gap-2"
             >
               <Save className="w-4 h-4" /> Simpan Konfigurasi
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setInputUrl(DEFAULT_WEBHOOK_URL);
+                onSaveWebhookUrl(DEFAULT_WEBHOOK_URL);
+                alert('URL berhasil diatur ke URL Google Apps Script BPN Medan!');
+              }}
+              className="neo-btn bg-white hover:bg-gray-100 text-brutal px-3.5 py-2 text-xs font-black flex items-center gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Reset ke URL BPN Default
             </button>
 
             <button

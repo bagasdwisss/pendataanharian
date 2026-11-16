@@ -77,6 +77,9 @@ export const KELURAHAN_BY_KECAMATAN: Record<string, string[]> = {
   ],
 };
 
+export const DEFAULT_WEBHOOK_URL =
+  'https://script.google.com/macros/s/AKfycbx0h-Tj71gho3GyKyTw8n7UK8_AVllNGuw3FMIaMwrUkn6kvmqmfPPo2ZVJxvRw09te/exec';
+
 export const TIM_PRESETS = [
   { id: 'TIM 1&2', label: 'TIM 1&2', folderName: 'TEAM 1&2' },
   { id: 'TIM 3', label: 'TIM 3', folderName: 'TEAM 3' },
