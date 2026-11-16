@@ -148,19 +148,22 @@ function doPost(e) {
     var todayStr = Utilities.formatDate(new Date(), "GMT+7", "dd-MM-yyyy");
     var kecamatanList = payload.kecamatanList || [];
 
-    // Siapkan Folder Drive jika ada foto yang diunggah
-    var dateFolder = null;
-    var hasAnyPhotos = kecamatanList.some(function(k) {
-      return (k.sitataBase64List && k.sitataBase64List.length > 0) ||
-             (k.kkpBase64List && k.kkpBase64List.length > 0);
-    });
+    // 1. Siapkan Folder Google Drive Target
+    var targetFolder = null;
+    var folderErrMsg = "";
 
-    if (hasAnyPhotos) {
+    try {
+      var parentFolder = DriveApp.getFolderById(PARENT_FOLDER_ID);
+      var teamFolder = getTeamFolder(parentFolder, tim);
+      targetFolder = getOrCreateSubFolder(teamFolder, todayStr);
+    } catch (eDrive) {
+      folderErrMsg = eDrive.toString();
+      Logger.log("Drive folder error: " + folderErrMsg);
       try {
-        var parentFolder = DriveApp.getFolderById(PARENT_FOLDER_ID);
-        var teamFolder = getTeamFolder(parentFolder, tim);
-        dateFolder = getOrCreateSubFolder(teamFolder, todayStr);
-      } catch (driveErr) {}
+        targetFolder = DriveApp.getFolderById(PARENT_FOLDER_ID);
+      } catch (eParent) {
+        targetFolder = null;
+      }
     }
 
     var results = [];
@@ -173,23 +176,37 @@ function doPost(e) {
 
       // Simpan Foto SITATA
       var sitataUrls = [];
-      if (item.sitataBase64List && item.sitataBase64List.length > 0 && dateFolder) {
-        for (var s = 0; s < item.sitataBase64List.length; s++) {
-          try {
-            var sFileName = "SITATA_" + cleanKec + "_" + cleanKel + "_" + (s + 1) + "_" + new Date().getTime() + ".jpg";
-            sitataUrls.push(saveBase64ToDrive(item.sitataBase64List[s], sFileName, dateFolder));
-          } catch (eS) {}
+      if (item.sitataBase64List && item.sitataBase64List.length > 0) {
+        if (!targetFolder) {
+          sitataUrls.push("[Gagal Drive: Folder tidak dapat diakses - " + folderErrMsg + "]");
+        } else {
+          for (var s = 0; s < item.sitataBase64List.length; s++) {
+            try {
+              var sFileName = "SITATA_" + cleanKec + "_" + cleanKel + "_" + (s + 1) + "_" + new Date().getTime() + ".jpg";
+              var sUrl = saveBase64ToDrive(item.sitataBase64List[s], sFileName, targetFolder);
+              sitataUrls.push(sUrl);
+            } catch (eS) {
+              sitataUrls.push("[Gagal Simpan: " + eS.message + "]");
+            }
+          }
         }
       }
 
       // Simpan Foto KKP
       var kkpUrls = [];
-      if (item.kkpBase64List && item.kkpBase64List.length > 0 && dateFolder) {
-        for (var k = 0; k < item.kkpBase64List.length; k++) {
-          try {
-            var kFileName = "KKP_" + cleanKec + "_" + cleanKel + "_" + (k + 1) + "_" + new Date().getTime() + ".jpg";
-            kkpUrls.push(saveBase64ToDrive(item.kkpBase64List[k], kFileName, dateFolder));
-          } catch (eK) {}
+      if (item.kkpBase64List && item.kkpBase64List.length > 0) {
+        if (!targetFolder) {
+          kkpUrls.push("[Gagal Drive: Folder tidak dapat diakses - " + folderErrMsg + "]");
+        } else {
+          for (var k = 0; k < item.kkpBase64List.length; k++) {
+            try {
+              var kFileName = "KKP_" + cleanKec + "_" + cleanKel + "_" + (k + 1) + "_" + new Date().getTime() + ".jpg";
+              var kUrl = saveBase64ToDrive(item.kkpBase64List[k], kFileName, targetFolder);
+              kkpUrls.push(kUrl);
+            } catch (eK) {
+              kkpUrls.push("[Gagal Simpan: " + eK.message + "]");
+            }
+          }
         }
       }
 
@@ -251,24 +268,35 @@ function getTeamFolder(parentFolder, timName) {
     targetName = "TEAM 4";
   }
 
-  var subFolders = parentFolder.getFolders();
-  while (subFolders.hasNext()) {
-    var f = subFolders.next();
-    var fName = f.getName().toUpperCase().replace(/\\s+/g, "");
-    if (fName === targetName.replace(/\\s+/g, "") || f.getName().toUpperCase() === targetName) {
-      return f;
+  try {
+    var subFolders = parentFolder.getFolders();
+    while (subFolders.hasNext()) {
+      var f = subFolders.next();
+      var fName = f.getName().toUpperCase().replace(/\\s+/g, "");
+      if (fName === targetName.replace(/\\s+/g, "") || f.getName().toUpperCase() === targetName) {
+        return f;
+      }
     }
+    return parentFolder.createFolder(targetName);
+  } catch (err) {
+    return parentFolder;
   }
-  return parentFolder.createFolder(targetName);
 }
 
 function getOrCreateSubFolder(parentFolder, subFolderName) {
-  var folders = parentFolder.getFoldersByName(subFolderName);
-  if (folders.hasNext()) return folders.next();
-  return parentFolder.createFolder(subFolderName);
+  try {
+    var folders = parentFolder.getFoldersByName(subFolderName);
+    if (folders.hasNext()) return folders.next();
+    return parentFolder.createFolder(subFolderName);
+  } catch (err) {
+    return parentFolder;
+  }
 }
 
 function saveBase64ToDrive(base64Data, filename, folder) {
+  if (!base64Data || typeof base64Data !== "string") {
+    throw new Error("Data foto kosong atau tidak valid");
+  }
   var contentType = "image/jpeg";
   var cleanedData = base64Data;
   if (base64Data.indexOf(",") > -1) {
@@ -280,7 +308,14 @@ function saveBase64ToDrive(base64Data, filename, folder) {
   var decoded = Utilities.base64Decode(cleanedData);
   var blob = Utilities.newBlob(decoded, contentType, filename);
   var file = folder.createFile(blob);
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+  // Coba bagikan link agar dapat diakses jika diizinkan oleh kebijakan domain
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (eShare) {
+    // Abaikan jika akun Google Workspace membatasi setSharing
+  }
+
   return file.getUrl();
 }
 

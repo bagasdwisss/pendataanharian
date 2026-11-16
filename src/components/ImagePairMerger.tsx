@@ -199,6 +199,11 @@ export const ImagePairMerger: React.FC<Props> = ({
                       <CheckCircle2 className="w-3.5 h-3.5" /> Berhasil Digabung
                     </span>
                   )}
+                  {pair.status === 'idle' && (pair.beforeFile || pair.afterFile) && !(pair.beforeFile && pair.afterFile) && (
+                    <span className="text-xs font-extrabold text-blue-700 bg-sky-100 px-2 py-0.5 rounded-full border border-blue-400 flex items-center gap-1">
+                      📷 1 Foto Terlampir (Siap Kirim)
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleRemovePair(idx)}

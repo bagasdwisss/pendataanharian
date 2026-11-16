@@ -27,6 +27,7 @@ import {
   Menu
 } from 'lucide-react';
 import { DEFAULT_WEBHOOK_URL } from '@/lib/kantahData';
+import { mergeBeforeAfterImage } from '@/lib/imageMerger';
 
 const createDefaultKecamatan = (kecamatanName: string = 'Medan Helvetia'): KecamatanData => ({
   id: Math.random().toString(36).substring(2, 9),
@@ -136,13 +137,57 @@ export default function Home() {
     }
   };
 
-  // Convert Blob to Base64 helper
-  const blobToBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
+  // Convert Blob or File to compressed Base64 helper (max 1400px, quality 0.85)
+  const compressImageToBase64 = (
+    fileOrBlob: Blob | File,
+    maxDim = 1400,
+    quality = 0.85
+  ): Promise<string> => {
+    return new Promise((resolve) => {
+      try {
+        const url = URL.createObjectURL(fileOrBlob);
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          let w = img.naturalWidth || img.width;
+          let h = img.naturalHeight || img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve((reader.result as string) || '');
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(fileOrBlob);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          const reader = new FileReader();
+          reader.onloadend = () => resolve((reader.result as string) || '');
+          reader.onerror = () => resolve('');
+          reader.readAsDataURL(fileOrBlob);
+        };
+        img.src = url;
+      } catch (err) {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve((reader.result as string) || '');
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(fileOrBlob);
+      }
     });
   };
 
@@ -163,6 +208,12 @@ export default function Home() {
           if (pair.mergedBlob) {
             folder?.file(`SITATA_GABUNGAN_${i + 1}.jpg`, pair.mergedBlob);
             count++;
+          } else if (pair.beforeFile) {
+            folder?.file(`SITATA_SEBELUM_${i + 1}.jpg`, pair.beforeFile);
+            count++;
+          } else if (pair.afterFile) {
+            folder?.file(`SITATA_SESUDAH_${i + 1}.jpg`, pair.afterFile);
+            count++;
           }
         }
 
@@ -171,6 +222,12 @@ export default function Home() {
           const pair = kec.kkpPairs[j];
           if (pair.mergedBlob) {
             folder?.file(`KKP_GABUNGAN_${j + 1}.jpg`, pair.mergedBlob);
+            count++;
+          } else if (pair.beforeFile) {
+            folder?.file(`KKP_SEBELUM_${j + 1}.jpg`, pair.beforeFile);
+            count++;
+          } else if (pair.afterFile) {
+            folder?.file(`KKP_SESUDAH_${j + 1}.jpg`, pair.afterFile);
             count++;
           }
         }
@@ -216,27 +273,81 @@ export default function Home() {
     setSubmitSuccessMsg(null);
 
     try {
-      // 1. Prepare payload with base64 merged images
+      // Helper to extract all images from a pair (merged or individual)
+      const extractPairImages = async (
+        pair: ImagePair,
+        kecName: string,
+        kelName: string,
+        pairType: 'SITATA' | 'KKP'
+      ): Promise<string[]> => {
+        // 1. If already merged into dataUrl
+        if (pair.mergedUrl && pair.mergedUrl.startsWith('data:')) {
+          return [pair.mergedUrl];
+        }
+        // 2. If merged into blob
+        if (pair.mergedBlob) {
+          const b64 = await compressImageToBase64(pair.mergedBlob);
+          if (b64) return [b64];
+        }
+        // 3. If both before and after are present, perform instant merge
+        if (pair.beforeFile && pair.afterFile) {
+          try {
+            const beforeUrl = pair.beforePreview || URL.createObjectURL(pair.beforeFile);
+            const afterUrl = pair.afterPreview || URL.createObjectURL(pair.afterFile);
+            const merged = await mergeBeforeAfterImage(beforeUrl, afterUrl, {
+              type: pairType,
+              kecamatan: kecName || 'Kecamatan',
+              kelurahan: kelName || 'Kelurahan',
+              tim: tim || 'TIM',
+              dateStr: hariTanggal,
+            });
+            if (merged.dataUrl) return [merged.dataUrl];
+          } catch (mErr) {
+            console.warn('Instant merge failed, fallback to separate images:', mErr);
+          }
+        }
+        // 4. Fallback: single files or unmerged files
+        const list: string[] = [];
+        if (pair.beforeFile) {
+          const b = await compressImageToBase64(pair.beforeFile);
+          if (b) list.push(b);
+        }
+        if (pair.afterFile) {
+          const a = await compressImageToBase64(pair.afterFile);
+          if (a) list.push(a);
+        }
+        return list;
+      };
+
+      let totalPhotosAttached = 0;
+
+      // 1. Prepare payload with base64 images
       const preparedList = await Promise.all(
         kecamatanList.map(async (k) => {
           const sitataBase64List: string[] = [];
           for (const s of k.sitataPairs) {
-            if (s.mergedBlob) {
-              const b64 = await blobToBase64(s.mergedBlob);
-              sitataBase64List.push(b64);
-            }
+            const b64s = await extractPairImages(s, k.kecamatan, k.kelurahan, 'SITATA');
+            sitataBase64List.push(...b64s);
           }
 
           const kkpBase64List: string[] = [];
           for (const kp of k.kkpPairs) {
-            if (kp.mergedBlob) {
-              const b64 = await blobToBase64(kp.mergedBlob);
-              kkpBase64List.push(b64);
-            }
+            const b64s = await extractPairImages(kp, k.kecamatan, k.kelurahan, 'KKP');
+            kkpBase64List.push(...b64s);
           }
 
+          totalPhotosAttached += sitataBase64List.length + kkpBase64List.length;
+
           return {
-            ...k,
+            kecamatan: k.kecamatan,
+            kelurahan: k.kelurahan,
+            berhasilPlotting: k.berhasilPlotting,
+            digitasi: k.digitasi,
+            overlap: k.overlap,
+            pemecahan: k.pemecahan,
+            belumTeridentifikasi: k.belumTeridentifikasi,
+            dimatikan: k.dimatikan,
+            diluarBatasAdministrasi: k.diluarBatasAdministrasi,
             sitataBase64List,
             kkpBase64List,
           };
@@ -296,11 +407,19 @@ export default function Home() {
         origin: { y: 0.6 },
       });
 
-      setSubmitSuccessMsg(
-        cloudSuccess
-          ? 'Data dan dokumentasi foto gabungan berhasil dikirim ke Google Sheets & Google Drive!'
-          : 'Laporan berhasil disimpan di riwayat lokal browser! Hubungkan Google Apps Script Webhook di menu Pengaturan untuk sinkronisasi otomatis ke Google Sheets & Drive.'
-      );
+      let successMsg = '';
+      if (cloudSuccess) {
+        if (totalPhotosAttached > 0) {
+          successMsg = `Data dan ${totalPhotosAttached} foto dokumentasi berhasil dikirim ke Google Sheets & Google Drive!`;
+        } else {
+          successMsg = `Data angka berhasil dikirim ke Google Sheets! (Catatan: Form ini dikirim tanpa lampiran foto SITATA / KKP).`;
+        }
+      } else {
+        successMsg =
+          'Laporan berhasil disimpan di riwayat lokal browser! Hubungkan Google Apps Script Webhook di menu Pengaturan untuk sinkronisasi otomatis ke Google Sheets & Drive.';
+      }
+
+      setSubmitSuccessMsg(successMsg);
 
       // Scroll to top to see message
       window.scrollTo({ top: 0, behavior: 'smooth' });

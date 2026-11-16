@@ -40,10 +40,10 @@ export const Sidebar: React.FC<Props> = ({
   isMobileOpen,
   onCloseMobile,
 }) => {
-  const totalMergedImages = kecamatanList.reduce((acc, k) => {
-    const sitataReady = k.sitataPairs.filter(p => p.status === 'ready').length;
-    const kkpReady = k.kkpPairs.filter(p => p.status === 'ready').length;
-    return acc + sitataReady + kkpReady;
+  const totalImageFiles = kecamatanList.reduce((acc, k) => {
+    const sitataCount = k.sitataPairs.filter(p => p.status === 'ready' || p.mergedUrl || p.beforeFile || p.afterFile).length;
+    const kkpCount = k.kkpPairs.filter(p => p.status === 'ready' || p.mergedUrl || p.beforeFile || p.afterFile).length;
+    return acc + sitataCount + kkpCount;
   }, 0);
 
   const totalPlotting = kecamatanList.reduce((acc, k) => acc + (Number(k.berhasilPlotting) || 0), 0);
@@ -179,8 +179,8 @@ export const Sidebar: React.FC<Props> = ({
               </div>
             </div>
             <div className="mt-2.5 pt-2 border-t border-neutral-800 flex items-center justify-between text-xs">
-              <span className="text-neutral-400 font-bold text-[11px]">Foto Digabung:</span>
-              <span className="font-extrabold text-amber-400">{totalMergedImages} File</span>
+              <span className="text-neutral-400 font-bold text-[11px]">Foto Terlampir:</span>
+              <span className="font-extrabold text-amber-400">{totalImageFiles} File</span>
             </div>
           </div>
         </div>
@@ -193,11 +193,11 @@ export const Sidebar: React.FC<Props> = ({
               onDownloadZip();
               onCloseMobile();
             }}
-            disabled={totalMergedImages === 0 || isDownloadingZip}
+            disabled={totalImageFiles === 0 || isDownloadingZip}
             className="w-full neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-3 py-2 text-xs font-black flex items-center justify-center gap-2 disabled:opacity-40"
           >
             <FolderArchive className="w-4 h-4" />
-            {isDownloadingZip ? 'Membuat ZIP...' : `Unduh Semua Foto (${totalMergedImages})`}
+            {isDownloadingZip ? 'Membuat ZIP...' : `Unduh Semua Foto (${totalImageFiles})`}
           </button>
 
           <button
