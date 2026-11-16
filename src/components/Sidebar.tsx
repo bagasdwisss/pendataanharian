@@ -50,7 +50,7 @@ export const Sidebar: React.FC<Props> = ({
   const totalDigitasi = kecamatanList.reduce((acc, k) => acc + (Number(k.digitasi) || 0), 0);
 
   const navItems = [
-    { id: 'form', label: 'Form Input Harian', icon: Layers, badge: `${kecamatanList.length} Kec` },
+    { id: 'form', label: 'Form Input Harian', icon: Layers, badge: `${kecamatanList.length} Kecamatan` },
     { id: 'summary', label: 'Rekap & Teks Laporan', icon: Share2 },
     { id: 'history', label: 'Riwayat Pengiriman', icon: History },
     { id: 'settings', label: 'Koneksi Cloud & Drive', icon: Settings, status: cloudConnected },
@@ -74,7 +74,7 @@ export const Sidebar: React.FC<Props> = ({
 
       {/* Sidebar Container (Sticky on Desktop, Off-Canvas Drawer on Mobile) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-sidebar-bg text-white border-r-4 border-brutal flex flex-col justify-between p-5 overflow-y-auto transition-transform duration-300 ease-in-out shadow-neo-xl lg:shadow-none lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:flex-shrink-0 lg:translate-x-0 lg:z-20 ${
+        className={`fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-sidebar-bg text-white border-r-4 border-brutal flex flex-col justify-between p-5 overflow-y-auto transition-transform duration-300 ease-in-out shadow-neo-xl lg:shadow-none lg:sticky lg:top-0 lg:h-screen lg:w-80 lg:flex-shrink-0 lg:translate-x-0 lg:z-20 ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -144,12 +144,12 @@ export const Sidebar: React.FC<Props> = ({
                       : 'bg-neutral-900/60 hover:bg-neutral-800 text-neutral-300 border-neutral-800 hover:border-neutral-700'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-brutal' : 'text-neutral-400'}`} />
-                    <span>{item.label}</span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-brutal' : 'text-neutral-400'}`} />
+                    <span className="truncate">{item.label}</span>
                   </div>
                   {'badge' in item && Boolean((item as any).badge) && (
-                    <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${
+                    <span className={`text-[10px] px-2.5 py-0.5 rounded-md font-bold whitespace-nowrap flex-shrink-0 ${
                       isActive ? 'bg-brutal text-white' : 'bg-neutral-800 text-neutral-300'
                     }`}>
                       {(item as any).badge}

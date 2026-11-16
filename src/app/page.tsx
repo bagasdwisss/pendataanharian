@@ -605,7 +605,7 @@ export default function Home() {
                       <span className="pill-badge bg-brutal text-pastel-matcha text-[9px] py-0 px-2 font-black">
                         FINALISASI DATA
                       </span>
-                      <span className="text-[11px] font-black text-brutal truncate">
+                      <span className="text-[11px] font-black text-brutal whitespace-nowrap flex-shrink-0">
                         {kecamatanList.length} Kecamatan
                       </span>
                     </div>
