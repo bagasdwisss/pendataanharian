@@ -72,9 +72,9 @@ export const Sidebar: React.FC<Props> = ({
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Sidebar Container (Sticky on Desktop, Off-Canvas Drawer on Mobile) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-sidebar-bg text-white border-r-4 border-brutal flex flex-col justify-between p-5 overflow-y-auto transition-transform duration-300 ease-in-out shadow-neo-xl lg:shadow-none lg:static lg:translate-x-0 lg:min-h-screen lg:z-auto ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-sidebar-bg text-white border-r-4 border-brutal flex flex-col justify-between p-5 overflow-y-auto transition-transform duration-300 ease-in-out shadow-neo-xl lg:shadow-none lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:flex-shrink-0 lg:translate-x-0 lg:z-20 ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >

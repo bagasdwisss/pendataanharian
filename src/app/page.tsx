@@ -577,41 +577,63 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Bottom Submit Bento Card */}
-              <div className="rounded-3xl border-3 border-brutal bg-white p-6 shadow-neo-xl">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <span className="pill-badge bg-brutal text-pastel-matcha mb-1">
-                      FINALISASI DATA
-                    </span>
-                    <h3 className="text-xl font-black text-brutal">
+              {/* Bottom Info Card */}
+              <div className="rounded-3xl border-3 border-brutal bg-white/80 p-5 text-center shadow-neo-sm">
+                <span className="pill-badge bg-brutal text-pastel-matcha mb-1.5 inline-block">
+                  SELESAI INPUT
+                </span>
+                <h4 className="text-base font-black text-brutal">
+                  Data {kecamatanList.length} Kecamatan Siap Dikirim
+                </h4>
+                <p className="text-xs text-gray-600 font-bold max-w-md mx-auto mt-1">
+                  Seluruh data angka dan foto akan diproses. Anda dapat langsung mengklik tombol melayang di pojok kanan bawah untuk mengirim tanpa perlu menggulir ke bawah.
+                </p>
+              </div>
+
+              {/* Floating Bottom-Right Submit Action Bar */}
+              <div className="fixed bottom-3 right-3 left-3 sm:left-auto sm:bottom-6 sm:right-6 z-40 max-w-xl">
+                <div className="rounded-2xl sm:rounded-3xl border-3 border-brutal bg-white/95 backdrop-blur-md p-3 sm:p-4 shadow-neo-xl flex items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-5 duration-300">
+                  <div className="hidden md:block min-w-0 pr-1">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="pill-badge bg-brutal text-pastel-matcha text-[9px] py-0 px-2 font-black">
+                        FINALISASI DATA
+                      </span>
+                      <span className="text-[11px] font-black text-brutal truncate">
+                        {kecamatanList.length} Kecamatan
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-gray-500 font-bold truncate">
                       Kirim & Simpan Progress Harian
-                    </h3>
-                    <p className="text-xs text-gray-600 font-bold">
-                      Data {kecamatanList.length} kecamatan akan dicatat dan seluruh foto Sebelum & Sesudah digabung otomatis.
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto justify-end">
                     <button
                       type="button"
                       onClick={() => setActiveTab('summary')}
-                      className="neo-btn bg-canvas hover:bg-gray-100 text-brutal px-4 py-2.5 text-xs font-black flex items-center gap-2"
+                      className="neo-btn bg-canvas hover:bg-gray-100 text-brutal px-3 py-2 sm:px-3.5 sm:py-2.5 text-xs font-black flex items-center gap-1.5 shadow-neo-sm flex-shrink-0"
+                      title="Pratinjau Teks WhatsApp"
                     >
-                      <Share2 className="w-4 h-4" /> Pratinjau Teks WhatsApp
+                      <Share2 className="w-4 h-4 text-emerald-700" />
+                      <span className="hidden xs:inline sm:inline">Pratinjau WA</span>
                     </button>
 
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-6 py-3 text-sm font-black flex items-center gap-2 shadow-neo-lg disabled:opacity-50"
+                      className="neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-4 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-neo-lg disabled:opacity-50 flex-1 sm:flex-initial"
                     >
-                      <Send className="w-4 h-4" />
-                      {isSubmitting ? 'Memproses & Menyimpan...' : '🚀 KIRIM PROGRESS HARIAN'}
+                      <Send className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">
+                        {isSubmitting ? 'Memproses...' : '🚀 KIRIM PROGRESS HARIAN'}
+                      </span>
                     </button>
                   </div>
                 </div>
               </div>
+
+              {/* Bottom Spacer for Floating Dock */}
+              <div className="h-16" />
             </div>
           </form>
         )}
