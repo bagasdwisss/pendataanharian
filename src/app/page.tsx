@@ -597,34 +597,21 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Floating Bottom-Right Submit Action Bar */}
-              <div className="fixed bottom-3 right-3 left-3 sm:left-auto sm:bottom-6 sm:right-6 z-40 max-w-md">
-                <div className="rounded-2xl sm:rounded-3xl border-3 border-brutal bg-white/95 backdrop-blur-md p-2.5 sm:p-3 shadow-neo-xl flex items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-5 duration-300">
-                  <div className="hidden sm:block min-w-0 pl-1 pr-2">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="pill-badge bg-brutal text-pastel-matcha text-[9px] py-0 px-2 font-black">
-                        FINALISASI DATA
-                      </span>
-                      <span className="text-[11px] font-black text-brutal whitespace-nowrap flex-shrink-0">
-                        {kecamatanList.length} Kecamatan
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-gray-500 font-bold truncate">
-                      Kirim & Simpan Progress Harian
-                    </p>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full sm:w-auto neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-5 sm:px-7 py-3 text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-neo-lg disabled:opacity-50 flex-shrink-0"
-                  >
-                    <Send className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate">
-                      {isSubmitting ? 'Memproses...' : '🚀 KIRIM PROGRESS HARIAN'}
-                    </span>
-                  </button>
-                </div>
+              {/* Floating Bottom-Right Submit Action Button */}
+              <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-5 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm font-black flex items-center justify-center gap-2.5 shadow-neo-xl disabled:opacity-50 whitespace-nowrap transition-transform hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  <Send className="w-4 h-4 flex-shrink-0" />
+                  <span>
+                    {isSubmitting ? 'Memproses...' : '🚀 KIRIM PROGRESS HARIAN'}
+                  </span>
+                  <span className="pill-badge bg-brutal text-white text-[10px] sm:text-xs py-0.5 px-2.5 font-black whitespace-nowrap">
+                    {kecamatanList.length} Kecamatan
+                  </span>
+                </button>
               </div>
 
               {/* Bottom Spacer for Floating Dock */}
