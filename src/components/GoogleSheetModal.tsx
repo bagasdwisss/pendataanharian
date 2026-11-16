@@ -142,7 +142,7 @@ export const GoogleSheetModal: React.FC<Props> = ({
               </div>
             </div>
             <a
-              href="https://drive.google.com/drive/folders/18q1anXDV3cHJT56ooKunFgEumFmbaUM3?usp=sharing"
+              href="https://drive.google.com/drive/folders/1Gv-qZF-at6F-3KMZkdPNdZUnVSlDohQ6?usp=sharing"
               target="_blank"
               rel="noopener noreferrer"
               className="neo-btn bg-pastel-blue hover:bg-sky-300 text-brutal px-2.5 py-1 text-[11px] font-black flex items-center gap-1 flex-shrink-0"

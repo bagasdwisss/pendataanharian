@@ -4,11 +4,11 @@ export const GOOGLE_APPS_SCRIPT_TEMPLATE = `/**
  * PENDATAAN HARIAN + AUTO SETUP TABEL & HEADER
  * =========================================================================
  *
- * Folder Google Drive:
- * https://drive.google.com/drive/folders/18q1anXDV3cHJT56ooKunFgEumFmbaUM3
+ * Folder Google Drive Induk:
+ * https://drive.google.com/drive/folders/1Gv-qZF-at6F-3KMZkdPNdZUnVSlDohQ6
  */
 
-var PARENT_FOLDER_ID = "18q1anXDV3cHJT56ooKunFgEumFmbaUM3";
+var PARENT_FOLDER_ID = "1Gv-qZF-at6F-3KMZkdPNdZUnVSlDohQ6";
 
 // Daftar 14 Kolom Header Resmi
 var HEADERS = [
