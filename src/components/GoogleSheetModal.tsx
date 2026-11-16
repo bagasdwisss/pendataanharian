@@ -60,9 +60,10 @@ export const GoogleSheetModal: React.FC<Props> = ({
       const res = await fetch(inputUrl.trim());
       if (res.ok) {
         const data = await res.json();
-        setTestStatus('success');
+        const driveOk = Boolean(data.folderDriveTerhubung);
+        setTestStatus(driveOk ? 'success' : 'error');
         setTestMsg(
-          `✅ Endpoint Aktif! Sheet: "${data.namaSheet || 'Sheet1'}" (${data.jumlahBarisSaatIni || 0} baris saat ini). Drive: ${data.folderDriveTerhubung ? 'Terhubung' : 'Perlu Izin'}. ${data.pesanDiagnostik || ''}`
+          `✅ Endpoint Aktif! Sheet: "${data.namaSheet || 'Sheet1'}" (${data.jumlahBaris || data.jumlahBarisSaatIni || 0} baris saat ini). Drive: ${driveOk ? '✅ Terhubung (' + (data.pesanDrive || 'Siap') + ')' : '⚠️ Perlu Izin: ' + (data.pesanDrive || 'Jalankan tesIzinDrive di Apps Script')}.`
         );
       } else {
         setTestStatus('error');

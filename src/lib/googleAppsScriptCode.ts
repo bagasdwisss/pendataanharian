@@ -29,6 +29,16 @@ var HEADERS = [
 ];
 
 /**
+ * JALANKAN FUNGSI INI SEKALI UNTUK MENGAKTIFKAN IZIN GOOGLE DRIVE!
+ * Di dropdown fungsi atas, pilih 'tesIzinDrive' lalu klik tombol 'Run / Jalankan'.
+ */
+function tesIzinDrive() {
+  var folder = DriveApp.getFolderById(PARENT_FOLDER_ID);
+  Logger.log("✅ Berhasil! Terhubung ke Folder Drive: " + folder.getName());
+  return "Berhasil terhubung ke folder: " + folder.getName();
+}
+
+/**
  * Menu otomatis di bilah menu Google Sheets
  * Saat Anda membuka Spreadsheet, akan muncul menu '🏛️ Kantah Medan' di samping menu Bantuan
  */
@@ -285,11 +295,25 @@ function doGet(e) {
     ensureHeadersExist(sheet);
   }
 
+  var driveOk = false;
+  var driveInfo = "";
+  try {
+    var folder = DriveApp.getFolderById(PARENT_FOLDER_ID);
+    if (folder) {
+      driveOk = true;
+      driveInfo = "Terhubung (" + folder.getName() + ")";
+    }
+  } catch(eDrive) {
+    driveInfo = eDrive.message;
+  }
+
   return ContentService.createTextOutput(JSON.stringify({
-    status: "online_siap",
+    status: (ss && driveOk) ? "online_siap" : "perlu_perhatian",
     spreadsheetTerhubung: !!ss,
     namaSheet: sheet ? sheet.getName() : "Tidak ditemukan",
     jumlahBaris: sheet ? sheet.getLastRow() : 0,
+    folderDriveTerhubung: driveOk,
+    pesanDrive: driveInfo,
     headers: HEADERS,
     pesan: "Tabel dan Header siap! Endpoint siap menerima data."
   }, null, 2)).setMimeType(ContentService.MimeType.JSON);
