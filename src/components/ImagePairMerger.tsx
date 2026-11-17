@@ -381,16 +381,16 @@ export const ImagePairMerger: React.FC<Props> = ({
               {/* Rendered Preview & PDF Actions */}
               {pair.mergedUrl && (
                 <div className="mt-3 pt-2.5 border-t border-gray-200">
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                     <span className="text-xs font-extrabold text-brutal flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                       {pair.mode === 'both' ? 'Hasil Penggabungan Otomatis:' : 'Hasil Olah Dokumen Tunggal:'}
                     </span>
-                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                       <button
                         type="button"
                         onClick={() => setActiveModalImg(pair.mergedUrl)}
-                        className="neo-btn bg-white hover:bg-gray-100 text-brutal text-[11px] px-2.5 py-1 flex items-center gap-1"
+                        className="neo-btn bg-white hover:bg-gray-100 text-brutal text-xs py-1.5 px-3 flex-1 sm:flex-none flex items-center justify-center gap-1.5 font-bold shadow-neo-sm"
                       >
                         <Eye className="w-3.5 h-3.5" /> Pratinjau
                       </button>
@@ -398,7 +398,7 @@ export const ImagePairMerger: React.FC<Props> = ({
                         <button
                           type="button"
                           onClick={() => handleDownloadPdf(pair, idx)}
-                          className="neo-btn bg-pastel-butter hover:bg-yellow-300 text-brutal text-[11px] px-2.5 py-1 flex items-center gap-1"
+                          className="neo-btn bg-pastel-butter hover:bg-yellow-300 text-brutal text-xs py-1.5 px-3 flex-1 sm:flex-none flex items-center justify-center gap-1.5 font-bold shadow-neo-sm"
                         >
                           <Download className="w-3.5 h-3.5" /> Unduh PDF
                         </button>
@@ -408,7 +408,7 @@ export const ImagePairMerger: React.FC<Props> = ({
 
                   <div
                     onClick={() => setActiveModalImg(pair.mergedUrl)}
-                    className="cursor-pointer border-2 border-brutal rounded-lg overflow-hidden bg-black max-h-36 flex items-center justify-center hover:opacity-95 transition"
+                    className="cursor-pointer border-2 border-brutal rounded-lg overflow-hidden bg-black max-h-36 flex items-center justify-center hover:opacity-95 transition shadow-neo-sm"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img

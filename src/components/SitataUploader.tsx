@@ -227,12 +227,14 @@ export const SitataUploader: React.FC<Props> = ({
                   />
                 </label>
               ) : (
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-3 bg-white p-2.5 rounded-xl border border-gray-200">
-                  <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
+                <div className="bg-white p-3 rounded-xl border-2 border-brutal shadow-neo-sm space-y-3">
+                  {/* Row 1: File Thumbnail & Details */}
+                  <div className="flex items-center gap-3">
                     {item.previewUrl ? (
                       <div
                         onClick={() => setActiveModalImg(item.previewUrl)}
-                        className="w-16 h-14 rounded-lg border border-brutal overflow-hidden bg-black flex items-center justify-center cursor-pointer flex-shrink-0 hover:opacity-90 transition"
+                        className="w-14 h-14 rounded-lg border-2 border-brutal overflow-hidden bg-black flex items-center justify-center cursor-pointer shrink-0 hover:opacity-90 transition shadow-neo-sm"
+                        title="Klik untuk memperbesar"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -242,46 +244,54 @@ export const SitataUploader: React.FC<Props> = ({
                         />
                       </div>
                     ) : (
-                      <div className="w-16 h-14 rounded-lg border border-brutal bg-emerald-50 flex flex-col items-center justify-center flex-shrink-0 text-emerald-800">
+                      <div className="w-14 h-14 rounded-lg border-2 border-brutal bg-emerald-50 flex flex-col items-center justify-center shrink-0 text-emerald-800 shadow-neo-sm">
                         <FileCheck className="w-6 h-6" />
                         <span className="text-[9px] font-black uppercase">PDF</span>
                       </div>
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <span className="text-xs font-black text-brutal block truncate max-w-[200px] sm:max-w-[260px]">
+                      <span className="text-xs font-black text-brutal block truncate" title={item.file.name}>
                         {item.file.name}
                       </span>
-                      <span className="text-[10px] text-gray-500 font-bold block">
-                        {(item.file.size / 1024).toFixed(1)} KB • Otomatis jadi PDF
-                      </span>
+                      <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-gray-500 font-bold">
+                        <span>{(item.file.size / 1024).toFixed(1)} KB</span>
+                        <span>•</span>
+                        <span className="text-emerald-700 font-black inline-flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 inline" /> Format PDF Siap
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 flex-shrink-0 w-full sm:w-auto justify-between sm:justify-end">
-                    {item.previewUrl && (
+                  {/* Row 2: Clean 3-Button Action Bar (Never Overlaps) */}
+                  <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-gray-200">
+                    {item.previewUrl ? (
                       <button
                         type="button"
                         onClick={() => setActiveModalImg(item.previewUrl)}
-                        className="neo-btn bg-white hover:bg-gray-100 text-brutal text-[11px] px-2.5 py-1.5 flex items-center gap-1"
+                        className="neo-btn bg-white hover:bg-gray-100 text-brutal text-xs py-2 px-1.5 flex items-center justify-center gap-1.5 font-bold shadow-neo-sm"
                       >
-                        <Eye className="w-3.5 h-3.5" /> Pratinjau
+                        <Eye className="w-3.5 h-3.5 text-gray-700" /> Pratinjau
                       </button>
+                    ) : (
+                      <div />
                     )}
 
-                    {item.pdfBlob && (
+                    {item.pdfBlob ? (
                       <button
                         type="button"
                         onClick={() => handleDownloadPdf(item, idx)}
-                        className="neo-btn bg-pastel-butter hover:bg-yellow-300 text-brutal text-[11px] px-2.5 py-1.5 flex items-center gap-1"
+                        className="neo-btn bg-pastel-butter hover:bg-yellow-300 text-brutal text-xs py-2 px-1.5 flex items-center justify-center gap-1.5 font-bold shadow-neo-sm"
                       >
-                        <Download className="w-3.5 h-3.5" /> Unduh PDF
+                        <Download className="w-3.5 h-3.5 text-brutal" /> Unduh PDF
                       </button>
+                    ) : (
+                      <div />
                     )}
 
-                    <label className="neo-btn bg-white hover:bg-gray-100 text-brutal text-[11px] px-2.5 py-1.5 flex items-center gap-1 cursor-pointer">
-                      <Upload className="w-3.5 h-3.5" /> Ganti
+                    <label className="neo-btn bg-white hover:bg-gray-100 text-brutal text-xs py-2 px-1.5 flex items-center justify-center gap-1.5 font-bold cursor-pointer shadow-neo-sm">
+                      <Upload className="w-3.5 h-3.5 text-gray-700" /> Ganti
                       <input
                         type="file"
                         accept="image/*,application/pdf"
