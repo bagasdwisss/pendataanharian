@@ -8,6 +8,7 @@ import { GoogleSheetModal } from '@/components/GoogleSheetModal';
 import { SummaryModal } from '@/components/SummaryModal';
 import { HistoryTab } from '@/components/HistoryTab';
 import { SheetPreviewTab } from '@/components/SheetPreviewTab';
+import { ConfirmModal } from '@/components/ConfirmModal';
 import { KecamatanData, ImagePair, SubmissionHistoryItem } from '@/lib/types';
 import JSZip from 'jszip';
 import confetti from 'canvas-confetti';
@@ -71,6 +72,7 @@ export default function Home() {
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isDraftRestored, setIsDraftRestored] = useState<boolean>(false);
   const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+  const [isResetModalOpen, setIsResetModalOpen] = useState<boolean>(false);
 
   // Initialize date, webhook, history & load draft on mount
   useEffect(() => {
@@ -171,27 +173,6 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [hariTanggal, tim, customTim, kecamatanList, isInitialized]);
 
-  // Warn user if closing/refreshing tab with unsaved/unsubmitted form progress
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      const hasUnsubmittedData = kecamatanList.some(
-        (k) =>
-          Boolean(k.kelurahan) ||
-          Boolean(k.berhasilPlotting) ||
-          Boolean(k.digitasi) ||
-          (k.sitataFiles && k.sitataFiles.length > 0) ||
-          (k.kkpPairs && k.kkpPairs.length > 0)
-      );
-      if (hasUnsubmittedData && !isSubmitting) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [kecamatanList, isSubmitting]);
-
   const handleSaveWebhook = (url: string) => {
     setWebhookUrl(url);
     localStorage.setItem('kantah_medan_webhook_url', url);
@@ -230,13 +211,15 @@ export default function Home() {
     setKecamatanList(list);
   };
 
-  const handleResetForm = async () => {
-    if (confirm('Yakin ingin mereset seluruh form input harian ini? Draft tersimpan di browser juga akan dibersihkan.')) {
-      await clearFormDraft();
-      setIsDraftRestored(false);
-      setKecamatanList([createDefaultKecamatan('')]);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+  const handleResetForm = () => {
+    setIsResetModalOpen(true);
+  };
+
+  const confirmResetForm = async () => {
+    await clearFormDraft();
+    setIsDraftRestored(false);
+    setKecamatanList([createDefaultKecamatan('')]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Convert Blob or File to compressed Base64 helper (max 1400px, quality 0.85)
@@ -881,6 +864,18 @@ export default function Home() {
 
         {/* Tab 5: Published Sheet Live Embed */}
         {activeTab === 'sheet' && <SheetPreviewTab />}
+
+        {/* Reset Confirmation Modal */}
+        <ConfirmModal
+          isOpen={isResetModalOpen}
+          onClose={() => setIsResetModalOpen(false)}
+          onConfirm={confirmResetForm}
+          title="Reset Formulir Harian"
+          message="Yakin ingin mereset seluruh formulir harian ini? Seluruh isian data dan dokumen yang belum terkirim akan dibersihkan dari penyimpanan browser."
+          confirmText="Ya, Reset Formulir"
+          cancelText="Batal"
+          type="warning"
+        />
       </main>
     </div>
   );

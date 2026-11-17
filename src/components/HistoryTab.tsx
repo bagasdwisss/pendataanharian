@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { SubmissionHistoryItem } from '@/lib/types';
 import { History, Calendar, Users, MapPin, Trash2, ArrowUpRight, RotateCcw } from 'lucide-react';
+import { ConfirmModal } from './ConfirmModal';
 
 interface Props {
   history: SubmissionHistoryItem[];
@@ -15,6 +16,8 @@ export const HistoryTab: React.FC<Props> = ({
   onClearHistory,
   onRestore,
 }) => {
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+
   return (
     <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
       <div className="rounded-3xl border-3 border-brutal bg-pastel-blue p-4 sm:p-6 shadow-neo-lg flex flex-wrap items-center justify-between gap-4">
@@ -33,11 +36,7 @@ export const HistoryTab: React.FC<Props> = ({
         {history.length > 0 && (
           <button
             type="button"
-            onClick={() => {
-              if (confirm('Yakin ingin menghapus seluruh riwayat pengiriman lokal?')) {
-                onClearHistory();
-              }
-            }}
+            onClick={() => setIsClearModalOpen(true)}
             className="neo-btn bg-red-400 hover:bg-red-500 text-white px-3.5 py-1.5 text-xs font-black flex items-center justify-center gap-1.5 w-full sm:w-auto"
           >
             <Trash2 className="w-4 h-4" /> Bersihkan Riwayat
@@ -117,6 +116,18 @@ export const HistoryTab: React.FC<Props> = ({
           ))}
         </div>
       )}
+
+      {/* Confirm Clear History Modal */}
+      <ConfirmModal
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        onConfirm={onClearHistory}
+        title="Bersihkan Riwayat Pengiriman"
+        message="Yakin ingin menghapus seluruh catatan riwayat pengiriman lokal dari perangkat ini? Tindakan ini tidak dapat dibatalkan."
+        confirmText="Ya, Hapus Semua"
+        cancelText="Batal"
+        type="danger"
+      />
     </div>
   );
 };
