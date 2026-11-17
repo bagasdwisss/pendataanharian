@@ -27,7 +27,7 @@ import {
   Menu
 } from 'lucide-react';
 import { DEFAULT_WEBHOOK_URL } from '@/lib/kantahData';
-import { mergeBeforeAfterImage } from '@/lib/imageMerger';
+import { mergeBeforeAfterImage, renderSingleImageCanvas } from '@/lib/imageMerger';
 
 const createDefaultKecamatan = (kecamatanName: string = 'Medan Helvetia'): KecamatanData => ({
   id: Math.random().toString(36).substring(2, 9),
@@ -40,6 +40,7 @@ const createDefaultKecamatan = (kecamatanName: string = 'Medan Helvetia'): Kecam
   belumTeridentifikasi: 0,
   dimatikan: 0,
   diluarBatasAdministrasi: 0,
+  sitataFiles: [],
   sitataPairs: [],
   kkpPairs: [],
 });
@@ -121,7 +122,8 @@ export default function Home() {
     const duplicated: KecamatanData = {
       ...target,
       id: Math.random().toString(36).substring(2, 9),
-      // keep metrics and names, but fresh image pairs
+      // keep metrics and names, but fresh image files
+      sitataFiles: [],
       sitataPairs: [],
       kkpPairs: [],
     };
@@ -191,7 +193,7 @@ export default function Home() {
     });
   };
 
-  // Download all merged images as ZIP
+  // Download all merged documents as ZIP containing SITATA and KKP PDF folders
   const handleDownloadZip = async () => {
     setIsDownloadingZip(true);
     try {
@@ -199,42 +201,69 @@ export default function Home() {
       let count = 0;
 
       for (const kec of kecamatanList) {
-        const folderName = `${kec.kecamatan || 'Kecamatan'}_${kec.kelurahan || 'Kelurahan'}`.replace(/\s+/g, '_');
-        const folder = zip.folder(folderName);
+        const cleanKec = (kec.kecamatan || 'Kecamatan').replace(/[^a-zA-Z0-9]/g, '_');
+        const cleanKel = (kec.kelurahan || 'Kelurahan').replace(/[^a-zA-Z0-9]/g, '_');
+        const folderName = `${cleanKec}_${cleanKel}`;
+        const kecFolder = zip.folder(folderName);
+        const sitataFolder = kecFolder?.folder('SITATA');
+        const kkpFolder = kecFolder?.folder('KKP');
 
-        // Sitata
-        for (let i = 0; i < kec.sitataPairs.length; i++) {
-          const pair = kec.sitataPairs[i];
-          if (pair.mergedBlob) {
-            folder?.file(`SITATA_GABUNGAN_${i + 1}.jpg`, pair.mergedBlob);
+        // 1. SITATA files (PDF)
+        const sitataList = kec.sitataFiles || [];
+        for (let i = 0; i < sitataList.length; i++) {
+          const item = sitataList[i];
+          const fileName = `SITATA_${cleanKec}_${cleanKel}_${i + 1}.pdf`;
+          if (item.pdfBlob) {
+            sitataFolder?.file(fileName, item.pdfBlob);
             count++;
-          } else if (pair.beforeFile) {
-            folder?.file(`SITATA_SEBELUM_${i + 1}.jpg`, pair.beforeFile);
-            count++;
-          } else if (pair.afterFile) {
-            folder?.file(`SITATA_SESUDAH_${i + 1}.jpg`, pair.afterFile);
+          } else if (item.file) {
+            sitataFolder?.file(fileName, item.file);
             count++;
           }
         }
 
-        // KKP
-        for (let j = 0; j < kec.kkpPairs.length; j++) {
-          const pair = kec.kkpPairs[j];
-          if (pair.mergedBlob) {
-            folder?.file(`KKP_GABUNGAN_${j + 1}.jpg`, pair.mergedBlob);
+        // Backwards compatibility for sitataPairs if any
+        if (sitataList.length === 0 && kec.sitataPairs) {
+          for (let i = 0; i < kec.sitataPairs.length; i++) {
+            const pair = kec.sitataPairs[i];
+            const fileName = `SITATA_${cleanKec}_${cleanKel}_${i + 1}.pdf`;
+            if (pair.pdfBlob) {
+              sitataFolder?.file(fileName, pair.pdfBlob);
+              count++;
+            } else if (pair.mergedBlob) {
+              sitataFolder?.file(fileName.replace('.pdf', '.jpg'), pair.mergedBlob);
+              count++;
+            }
+          }
+        }
+
+        // 2. KKP files (PDF: Dual / Sebelum / Sesudah)
+        const kkpList = kec.kkpPairs || [];
+        for (let j = 0; j < kkpList.length; j++) {
+          const pair = kkpList[j];
+          let suffix = 'GABUNGAN';
+          if (pair.mode === 'before_only') suffix = 'SEBELUM';
+          else if (pair.mode === 'after_only') suffix = 'SESUDAH';
+          const fileName = `KKP_${suffix}_${cleanKec}_${cleanKel}_${j + 1}.pdf`;
+
+          if (pair.pdfBlob) {
+            kkpFolder?.file(fileName, pair.pdfBlob);
+            count++;
+          } else if (pair.mergedBlob) {
+            kkpFolder?.file(fileName.replace('.pdf', '.jpg'), pair.mergedBlob);
             count++;
           } else if (pair.beforeFile) {
-            folder?.file(`KKP_SEBELUM_${j + 1}.jpg`, pair.beforeFile);
+            kkpFolder?.file(`KKP_SEBELUM_${cleanKec}_${cleanKel}_${j + 1}.jpg`, pair.beforeFile);
             count++;
           } else if (pair.afterFile) {
-            folder?.file(`KKP_SESUDAH_${j + 1}.jpg`, pair.afterFile);
+            kkpFolder?.file(`KKP_SESUDAH_${cleanKec}_${cleanKel}_${j + 1}.jpg`, pair.afterFile);
             count++;
           }
         }
       }
 
       if (count === 0) {
-        alert('Belum ada foto yang digabungkan untuk diunduh!');
+        alert('Belum ada dokumen PDF SITATA atau KKP yang siap untuk diunduh!');
         setIsDownloadingZip(false);
         return;
       }
@@ -243,7 +272,7 @@ export default function Home() {
       const url = URL.createObjectURL(content);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Dokumentasi_Foto_SITATA_KKP_${new Date().toISOString().slice(0, 10)}.zip`;
+      a.download = `Dokumentasi_PDF_SITATA_KKP_${new Date().toISOString().slice(0, 10)}.zip`;
       a.click();
     } catch (err: any) {
       console.error(err);
@@ -273,70 +302,126 @@ export default function Home() {
     setSubmitSuccessMsg(null);
 
     try {
-      // Helper to extract all images from a pair (merged or individual)
-      const extractPairImages = async (
-        pair: ImagePair,
-        kecName: string,
-        kelName: string,
-        pairType: 'SITATA' | 'KKP'
-      ): Promise<string[]> => {
-        // 1. If already merged into dataUrl
-        if (pair.mergedUrl && pair.mergedUrl.startsWith('data:')) {
-          return [pair.mergedUrl];
-        }
-        // 2. If merged into blob
-        if (pair.mergedBlob) {
-          const b64 = await compressImageToBase64(pair.mergedBlob);
-          if (b64) return [b64];
-        }
-        // 3. If both before and after are present, perform instant merge
-        if (pair.beforeFile && pair.afterFile) {
-          try {
-            const beforeUrl = pair.beforePreview || URL.createObjectURL(pair.beforeFile);
-            const afterUrl = pair.afterPreview || URL.createObjectURL(pair.afterFile);
-            const merged = await mergeBeforeAfterImage(beforeUrl, afterUrl, {
-              type: pairType,
-              kecamatan: kecName || 'Kecamatan',
-              kelurahan: kelName || 'Kelurahan',
-              tim: tim || 'TIM',
-              dateStr: hariTanggal,
-            });
-            if (merged.dataUrl) return [merged.dataUrl];
-          } catch (mErr) {
-            console.warn('Instant merge failed, fallback to separate images:', mErr);
-          }
-        }
-        // 4. Fallback: single files or unmerged files
-        const list: string[] = [];
-        if (pair.beforeFile) {
-          const b = await compressImageToBase64(pair.beforeFile);
-          if (b) list.push(b);
-        }
-        if (pair.afterFile) {
-          const a = await compressImageToBase64(pair.afterFile);
-          if (a) list.push(a);
-        }
-        return list;
-      };
-
       let totalPhotosAttached = 0;
 
-      // 1. Prepare payload with base64 images
+      // 1. Prepare payload with pre-rendered, lightweight PDFs
       const preparedList = await Promise.all(
         kecamatanList.map(async (k) => {
-          const sitataBase64List: string[] = [];
-          for (const s of k.sitataPairs) {
-            const b64s = await extractPairImages(s, k.kecamatan, k.kelurahan, 'SITATA');
-            sitataBase64List.push(...b64s);
+          const cleanKec = (k.kecamatan || 'Kecamatan').replace(/[^a-zA-Z0-9]/g, '_');
+          const cleanKel = (k.kelurahan || 'Kelurahan').replace(/[^a-zA-Z0-9]/g, '_');
+
+          // --- Process SITATA (1 file per entry -> PDF) ---
+          const sitataPdfFiles: { name: string; base64: string }[] = [];
+          const sitataList = k.sitataFiles || [];
+          for (let s = 0; s < sitataList.length; s++) {
+            const item = sitataList[s];
+            let base64 = item.pdfBase64;
+
+            // Fallback generation if not pre-rendered
+            if (!base64) {
+              if (item.file && item.file.type === 'application/pdf') {
+                base64 = await new Promise<string>((resolve) => {
+                  const r = new FileReader();
+                  r.onload = () => resolve((r.result as string) || '');
+                  r.onerror = () => resolve('');
+                  r.readAsDataURL(item.file!);
+                });
+              } else if (item.previewUrl) {
+                try {
+                  const rendered = await renderSingleImageCanvas(item.previewUrl, {
+                    type: 'SITATA',
+                    mode: 'single',
+                    kecamatan: k.kecamatan,
+                    kelurahan: k.kelurahan,
+                    tim,
+                    dateStr: hariTanggal,
+                  });
+                  base64 = rendered.pdfBase64;
+                } catch (rErr) {
+                  console.warn('Fallback render SITATA single image error:', rErr);
+                }
+              }
+            }
+
+            if (base64) {
+              sitataPdfFiles.push({
+                name: `SITATA_${cleanKec}_${cleanKel}_${s + 1}.pdf`,
+                base64,
+              });
+            }
           }
 
-          const kkpBase64List: string[] = [];
-          for (const kp of k.kkpPairs) {
-            const b64s = await extractPairImages(kp, k.kecamatan, k.kelurahan, 'KKP');
-            kkpBase64List.push(...b64s);
+          // Backwards compatibility for legacy sitataPairs if any
+          if (sitataPdfFiles.length === 0 && k.sitataPairs && k.sitataPairs.length > 0) {
+            for (let s = 0; s < k.sitataPairs.length; s++) {
+              const pair = k.sitataPairs[s];
+              if (pair.pdfBase64) {
+                sitataPdfFiles.push({
+                  name: `SITATA_${cleanKec}_${cleanKel}_${s + 1}.pdf`,
+                  base64: pair.pdfBase64,
+                });
+              }
+            }
           }
 
-          totalPhotosAttached += sitataBase64List.length + kkpBase64List.length;
+          // --- Process KKP (Dual or Single Sebelum / Sesudah -> PDF) ---
+          const kkpPdfFiles: { name: string; base64: string }[] = [];
+          const kkpList = k.kkpPairs || [];
+          for (let kp = 0; kp < kkpList.length; kp++) {
+            const pair = kkpList[kp];
+            let base64 = pair.pdfBase64;
+            let suffix = 'GABUNGAN';
+            if (pair.mode === 'before_only') suffix = 'SEBELUM';
+            else if (pair.mode === 'after_only') suffix = 'SESUDAH';
+
+            // Fallback generation if not pre-rendered
+            if (!base64) {
+              const commonOpts = {
+                kecamatan: k.kecamatan || 'Kecamatan',
+                kelurahan: k.kelurahan || 'Kelurahan',
+                tim: tim || 'TIM',
+                dateStr: hariTanggal,
+              };
+
+              try {
+                if (pair.beforePreview && pair.afterPreview) {
+                  const res = await mergeBeforeAfterImage(pair.beforePreview, pair.afterPreview, {
+                    type: 'KKP',
+                    ...commonOpts,
+                  });
+                  base64 = res.pdfBase64;
+                  suffix = 'GABUNGAN';
+                } else if (pair.beforePreview) {
+                  const res = await renderSingleImageCanvas(pair.beforePreview, {
+                    type: 'KKP',
+                    mode: 'before',
+                    ...commonOpts,
+                  });
+                  base64 = res.pdfBase64;
+                  suffix = 'SEBELUM';
+                } else if (pair.afterPreview) {
+                  const res = await renderSingleImageCanvas(pair.afterPreview, {
+                    type: 'KKP',
+                    mode: 'after',
+                    ...commonOpts,
+                  });
+                  base64 = res.pdfBase64;
+                  suffix = 'SESUDAH';
+                }
+              } catch (mErr) {
+                console.warn('Fallback render KKP image/pdf error:', mErr);
+              }
+            }
+
+            if (base64) {
+              kkpPdfFiles.push({
+                name: `KKP_${suffix}_${cleanKec}_${cleanKel}_${kp + 1}.pdf`,
+                base64,
+              });
+            }
+          }
+
+          totalPhotosAttached += sitataPdfFiles.length + kkpPdfFiles.length;
 
           return {
             kecamatan: k.kecamatan,
@@ -348,8 +433,11 @@ export default function Home() {
             belumTeridentifikasi: k.belumTeridentifikasi,
             dimatikan: k.dimatikan,
             diluarBatasAdministrasi: k.diluarBatasAdministrasi,
-            sitataBase64List,
-            kkpBase64List,
+            sitataPdfFiles,
+            kkpPdfFiles,
+            // Fallback string arrays for older script versions:
+            sitataBase64List: sitataPdfFiles.map((f) => f.base64),
+            kkpBase64List: kkpPdfFiles.map((f) => f.base64),
           };
         })
       );
@@ -365,7 +453,6 @@ export default function Home() {
       // 2. If Google Apps Script Webhook is configured, POST to it
       if (webhookUrl) {
         try {
-          // Attempt standard POST first (to read JSON response if CORS is allowed)
           await fetch(webhookUrl, {
             method: 'POST',
             mode: 'no-cors', // standard cross-origin submission to Apps Script
@@ -410,9 +497,9 @@ export default function Home() {
       let successMsg = '';
       if (cloudSuccess) {
         if (totalPhotosAttached > 0) {
-          successMsg = `Data dan ${totalPhotosAttached} foto dokumentasi berhasil dikirim ke Google Sheets & Google Drive!`;
+          successMsg = `Data dan ${totalPhotosAttached} berkas PDF resmi berhasil disimpan ke Google Sheets & Google Drive (Folder KKP & SITATA)!`;
         } else {
-          successMsg = `Data angka berhasil dikirim ke Google Sheets! (Catatan: Form ini dikirim tanpa lampiran foto SITATA / KKP).`;
+          successMsg = `Data angka berhasil dikirim ke Google Sheets! (Catatan: Form ini dikirim tanpa lampiran dokumen SITATA / KKP).`;
         }
       } else {
         successMsg =

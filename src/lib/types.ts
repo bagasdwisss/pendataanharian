@@ -6,7 +6,19 @@ export interface ImagePair {
   afterPreview: string | null;
   mergedUrl: string | null;
   mergedBlob: Blob | null;
+  pdfBlob?: Blob | null;
+  pdfBase64?: string | null;
+  mode?: 'both' | 'before_only' | 'after_only';
   status: 'idle' | 'merging' | 'ready' | 'error';
+}
+
+export interface SitataFileItem {
+  id: string;
+  file: File | null;
+  previewUrl: string | null;
+  pdfBlob: Blob | null;
+  pdfBase64: string | null;
+  status: 'idle' | 'rendering' | 'ready' | 'error';
 }
 
 export interface KecamatanData {
@@ -20,7 +32,8 @@ export interface KecamatanData {
   belumTeridentifikasi: number;
   dimatikan: number;
   diluarBatasAdministrasi: number;
-  sitataPairs: ImagePair[];
+  sitataFiles: SitataFileItem[];
+  sitataPairs?: ImagePair[]; // backwards compatibility
   kkpPairs: ImagePair[];
 }
 

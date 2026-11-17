@@ -82,8 +82,7 @@ export const DEFAULT_WEBHOOK_URL =
 
 export const TIM_PRESETS = [
   { id: 'TIM 1&2', label: 'TIM 1&2', folderName: 'TEAM 1&2' },
-  { id: 'TIM 3', label: 'TIM 3', folderName: 'TEAM 3' },
-  { id: 'TIM 4', label: 'TIM 4', folderName: 'TEAM 4' },
+  { id: 'TIM 3&4', label: 'TIM 3&4', folderName: 'TEAM 3&4' },
 ];
 
 export const PASTEL_THEMES = [

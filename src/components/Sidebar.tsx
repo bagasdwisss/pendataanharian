@@ -41,8 +41,9 @@ export const Sidebar: React.FC<Props> = ({
   onCloseMobile,
 }) => {
   const totalImageFiles = kecamatanList.reduce((acc, k) => {
-    const sitataCount = k.sitataPairs.filter(p => p.status === 'ready' || p.mergedUrl || p.beforeFile || p.afterFile).length;
-    const kkpCount = k.kkpPairs.filter(p => p.status === 'ready' || p.mergedUrl || p.beforeFile || p.afterFile).length;
+    const sitataCount = (k.sitataFiles || []).filter(s => s.status === 'ready' || s.file).length +
+      (k.sitataPairs || []).filter(p => p.status === 'ready' || p.mergedUrl || p.beforeFile || p.afterFile).length;
+    const kkpCount = (k.kkpPairs || []).filter(p => p.status === 'ready' || p.mergedUrl || p.beforeFile || p.afterFile).length;
     return acc + sitataCount + kkpCount;
   }, 0);
 
@@ -179,8 +180,8 @@ export const Sidebar: React.FC<Props> = ({
               </div>
             </div>
             <div className="mt-2.5 pt-2 border-t border-neutral-800 flex items-center justify-between text-xs">
-              <span className="text-neutral-400 font-bold text-[11px]">Foto Terlampir:</span>
-              <span className="font-extrabold text-amber-400">{totalImageFiles} File</span>
+              <span className="text-neutral-400 font-bold text-[11px]">Berkas PDF:</span>
+              <span className="font-extrabold text-amber-400">{totalImageFiles} Dokumen</span>
             </div>
           </div>
         </div>
@@ -197,7 +198,7 @@ export const Sidebar: React.FC<Props> = ({
             className="w-full neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-3 py-2 text-xs font-black flex items-center justify-center gap-2 disabled:opacity-40"
           >
             <FolderArchive className="w-4 h-4" />
-            {isDownloadingZip ? 'Membuat ZIP...' : `Unduh Semua Foto (${totalImageFiles})`}
+            {isDownloadingZip ? 'Membuat ZIP...' : `Unduh Semua PDF (${totalImageFiles})`}
           </button>
 
           <button

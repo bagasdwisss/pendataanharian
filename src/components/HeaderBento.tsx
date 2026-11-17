@@ -96,8 +96,8 @@ export const HeaderBento: React.FC<Props> = ({
             Pilih TIM Pelaksana:
           </label>
           
-          {/* 3 TIM Buttons */}
-          <div className="grid grid-cols-3 gap-2 mb-2">
+          {/* 2 TIM Buttons: TIM 1&2 and TIM 3&4 */}
+          <div className="grid grid-cols-2 gap-2 mb-2">
             {TIM_PRESETS.map((t) => {
               const isSelected = tim === t.id;
               return (

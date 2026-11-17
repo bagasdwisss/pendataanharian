@@ -63,8 +63,10 @@ export const SummaryModal: React.FC<Props> = ({
       text += `   • Belum Terident.   : ${k.belumTeridentifikasi || 0}\n`;
       text += `   • Dimatikan         : ${k.dimatikan || 0}\n`;
       text += `   • Diluar Batas Adm  : ${k.diluarBatasAdministrasi || 0}\n`;
-      text += `   📷 Foto SITATA: ${k.sitataPairs.length} pasang\n`;
-      text += `   📷 Foto KKP   : ${k.kkpPairs.length} pasang\n`;
+      const sitataCount = (k.sitataFiles?.length || 0) + (k.sitataPairs?.length || 0);
+      const kkpCount = (k.kkpPairs?.length || 0);
+      text += `   📄 Berkas SITATA (PDF): ${sitataCount} dokumen\n`;
+      text += `   📷 Berkas KKP (PDF)   : ${kkpCount} dokumen\n`;
       text += `   👉 *Subtotal Bidang: ${subtotal}*\n\n`;
     });
 
@@ -118,8 +120,8 @@ export const SummaryModal: React.FC<Props> = ({
       k.belumTeridentifikasi || 0,
       k.dimatikan || 0,
       k.diluarBatasAdministrasi || 0,
-      k.sitataPairs.length,
-      k.kkpPairs.length,
+      (k.sitataFiles?.length || 0) + (k.sitataPairs?.length || 0),
+      k.kkpPairs?.length || 0,
       `"${hariTanggal}"`,
     ]);
 

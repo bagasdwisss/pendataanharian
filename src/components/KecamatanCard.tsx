@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { KecamatanData, ImagePair } from '@/lib/types';
+import { KecamatanData, ImagePair, SitataFileItem } from '@/lib/types';
 import { ImagePairMerger } from './ImagePairMerger';
+import { SitataUploader } from './SitataUploader';
 import { 
   KANTAH_KECAMATAN_LIST, 
   KELURAHAN_BY_KECAMATAN, 
@@ -257,25 +258,23 @@ export const KecamatanCard: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Row 3: Upload SITATA & Upload KKP (Before & After Auto Merger) */}
+      {/* Row 3: Upload SITATA (1 berkas) & Upload KKP (Sebelum & Sesudah / Tunggal) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* SITATA */}
-        <ImagePairMerger
-          title="Upload SITATA"
-          type="SITATA"
-          pairs={data.sitataPairs}
-          onChange={(pairs) => handleFieldChange('sitataPairs', pairs)}
+        {/* SITATA (1 Berkas per dokumen) */}
+        <SitataUploader
+          items={data.sitataFiles || []}
+          onChange={(items) => handleFieldChange('sitataFiles', items)}
           kecamatan={data.kecamatan}
           kelurahan={data.kelurahan}
           tim={tim}
           dateStr={hariTanggal}
         />
 
-        {/* KKP */}
+        {/* KKP (Sebelum & Sesudah atau Tunggal) */}
         <ImagePairMerger
           title="Upload KKP"
           type="KKP"
-          pairs={data.kkpPairs}
+          pairs={data.kkpPairs || []}
           onChange={(pairs) => handleFieldChange('kkpPairs', pairs)}
           kecamatan={data.kecamatan}
           kelurahan={data.kelurahan}

@@ -148,22 +148,23 @@ function doPost(e) {
     var todayStr = Utilities.formatDate(new Date(), "GMT+7", "dd-MM-yyyy");
     var kecamatanList = payload.kecamatanList || [];
 
-    // 1. Siapkan Folder Google Drive Target
-    var targetFolder = null;
+    // 1. Siapkan Folder Google Drive Target Berjenjang:
+    // TEAM -> TANGGAL -> Subfolder (SITATA & KKP)
+    var teamFolder = null;
+    var dateFolder = null;
+    var sitataFolder = null;
+    var kkpFolder = null;
     var folderErrMsg = "";
 
     try {
       var parentFolder = DriveApp.getFolderById(PARENT_FOLDER_ID);
-      var teamFolder = getTeamFolder(parentFolder, tim);
-      targetFolder = getOrCreateSubFolder(teamFolder, todayStr);
+      teamFolder = getTeamFolder(parentFolder, tim);
+      dateFolder = getOrCreateSubFolder(teamFolder, todayStr);
+      sitataFolder = getOrCreateSubFolder(dateFolder, "SITATA");
+      kkpFolder = getOrCreateSubFolder(dateFolder, "KKP");
     } catch (eDrive) {
       folderErrMsg = eDrive.toString();
       Logger.log("Drive folder error: " + folderErrMsg);
-      try {
-        targetFolder = DriveApp.getFolderById(PARENT_FOLDER_ID);
-      } catch (eParent) {
-        targetFolder = null;
-      }
     }
 
     var results = [];
@@ -174,37 +175,45 @@ function doPost(e) {
       var cleanKec = (item.kecamatan || "Kecamatan").replace(/[^a-zA-Z0-9]/g, "_");
       var cleanKel = (item.kelurahan || "Kelurahan").replace(/[^a-zA-Z0-9]/g, "_");
 
-      // Simpan Foto SITATA
+      // Simpan Berkas SITATA (Format PDF ke Folder SITATA)
       var sitataUrls = [];
-      if (item.sitataBase64List && item.sitataBase64List.length > 0) {
-        if (!targetFolder) {
+      var sitataList = item.sitataPdfFiles || item.sitataBase64List || [];
+      if (sitataList.length > 0) {
+        var targetSitataFolder = sitataFolder || dateFolder || teamFolder;
+        if (!targetSitataFolder) {
           sitataUrls.push("[Gagal Drive: Folder tidak dapat diakses - " + folderErrMsg + "]");
         } else {
-          for (var s = 0; s < item.sitataBase64List.length; s++) {
+          for (var s = 0; s < sitataList.length; s++) {
             try {
-              var sFileName = "SITATA_" + cleanKec + "_" + cleanKel + "_" + (s + 1) + "_" + new Date().getTime() + ".jpg";
-              var sUrl = saveBase64ToDrive(item.sitataBase64List[s], sFileName, targetFolder);
+              var sObj = sitataList[s];
+              var sB64 = (typeof sObj === "object" && sObj.base64) ? sObj.base64 : sObj;
+              var sFileName = (typeof sObj === "object" && sObj.name) ? sObj.name : ("SITATA_" + cleanKec + "_" + cleanKel + "_" + (s + 1) + ".pdf");
+              var sUrl = saveBase64PdfToDrive(sB64, sFileName, targetSitataFolder);
               sitataUrls.push(sUrl);
             } catch (eS) {
-              sitataUrls.push("[Gagal Simpan: " + eS.message + "]");
+              sitataUrls.push("[Gagal Simpan SITATA: " + eS.message + "]");
             }
           }
         }
       }
 
-      // Simpan Foto KKP
+      // Simpan Berkas KKP (Format PDF ke Folder KKP)
       var kkpUrls = [];
-      if (item.kkpBase64List && item.kkpBase64List.length > 0) {
-        if (!targetFolder) {
+      var kkpList = item.kkpPdfFiles || item.kkpBase64List || [];
+      if (kkpList.length > 0) {
+        var targetKkpFolder = kkpFolder || dateFolder || teamFolder;
+        if (!targetKkpFolder) {
           kkpUrls.push("[Gagal Drive: Folder tidak dapat diakses - " + folderErrMsg + "]");
         } else {
-          for (var k = 0; k < item.kkpBase64List.length; k++) {
+          for (var k = 0; k < kkpList.length; k++) {
             try {
-              var kFileName = "KKP_" + cleanKec + "_" + cleanKel + "_" + (k + 1) + "_" + new Date().getTime() + ".jpg";
-              var kUrl = saveBase64ToDrive(item.kkpBase64List[k], kFileName, targetFolder);
+              var kObj = kkpList[k];
+              var kB64 = (typeof kObj === "object" && kObj.base64) ? kObj.base64 : kObj;
+              var kFileName = (typeof kObj === "object" && kObj.name) ? kObj.name : ("KKP_" + cleanKec + "_" + cleanKel + "_" + (k + 1) + ".pdf");
+              var kUrl = saveBase64PdfToDrive(kB64, kFileName, targetKkpFolder);
               kkpUrls.push(kUrl);
             } catch (eK) {
-              kkpUrls.push("[Gagal Simpan: " + eK.message + "]");
+              kkpUrls.push("[Gagal Simpan KKP: " + eK.message + "]");
             }
           }
         }
@@ -261,19 +270,20 @@ function doPost(e) {
 
 function getTeamFolder(parentFolder, timName) {
   var targetName = "TEAM 1&2";
-  var upper = (timName || "").toUpperCase();
-  if (upper.indexOf("3") > -1 && upper.indexOf("4") === -1 && upper.indexOf("1") === -1) {
-    targetName = "TEAM 3";
-  } else if (upper.indexOf("4") > -1 && upper.indexOf("1") === -1 && upper.indexOf("3") === -1) {
-    targetName = "TEAM 4";
+  var upper = (timName || "").toUpperCase().replace(/\s+/g, "");
+  if (upper.indexOf("3") > -1 || upper.indexOf("4") > -1) {
+    targetName = "TEAM 3&4";
   }
 
   try {
     var subFolders = parentFolder.getFolders();
     while (subFolders.hasNext()) {
       var f = subFolders.next();
-      var fName = f.getName().toUpperCase().replace(/\\s+/g, "");
-      if (fName === targetName.replace(/\\s+/g, "") || f.getName().toUpperCase() === targetName) {
+      var fName = f.getName().toUpperCase().replace(/\s+/g, "");
+      if (
+        fName === targetName.replace(/\s+/g, "") ||
+        fName === targetName.replace("TEAM", "TIM").replace(/\s+/g, "")
+      ) {
         return f;
       }
     }
@@ -293,30 +303,40 @@ function getOrCreateSubFolder(parentFolder, subFolderName) {
   }
 }
 
-function saveBase64ToDrive(base64Data, filename, folder) {
+function saveBase64PdfToDrive(base64Data, filename, folder) {
   if (!base64Data || typeof base64Data !== "string") {
-    throw new Error("Data foto kosong atau tidak valid");
+    throw new Error("Data berkas kosong atau tidak valid");
   }
-  var contentType = "image/jpeg";
+  var contentType = "application/pdf";
   var cleanedData = base64Data;
   if (base64Data.indexOf(",") > -1) {
     var parts = base64Data.split(",");
     var mimePart = parts[0].match(/:(.*?);/);
-    if (mimePart && mimePart[1]) contentType = mimePart[1];
+    if (mimePart && mimePart[1]) {
+      contentType = mimePart[1];
+    }
     cleanedData = parts[1];
   }
+
+  // Pastikan nama file berakhiran .pdf
+  if (filename.toLowerCase().indexOf(".pdf") === -1) {
+    filename = filename.replace(/\.[^/.]+$/, "") + ".pdf";
+  }
+
   var decoded = Utilities.base64Decode(cleanedData);
   var blob = Utilities.newBlob(decoded, contentType, filename);
   var file = folder.createFile(blob);
 
-  // Coba bagikan link agar dapat diakses jika diizinkan oleh kebijakan domain
+  // Coba bagikan link agar dapat diakses oleh tim
   try {
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  } catch (eShare) {
-    // Abaikan jika akun Google Workspace membatasi setSharing
-  }
+  } catch (eShare) {}
 
   return file.getUrl();
+}
+
+function saveBase64ToDrive(base64Data, filename, folder) {
+  return saveBase64PdfToDrive(base64Data, filename, folder);
 }
 
 /**
