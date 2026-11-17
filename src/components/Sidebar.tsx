@@ -27,6 +27,7 @@ interface Props {
   cloudConnected: boolean;
   isMobileOpen: boolean;
   onCloseMobile: () => void;
+  lastSavedTime?: string | null;
 }
 
 export const Sidebar: React.FC<Props> = ({
@@ -39,6 +40,7 @@ export const Sidebar: React.FC<Props> = ({
   cloudConnected,
   isMobileOpen,
   onCloseMobile,
+  lastSavedTime,
 }) => {
   const totalImageFiles = kecamatanList.reduce((acc, k) => {
     const sitataCount = (k.sitataFiles || []).filter(s => s.status === 'ready' || s.file).length +
@@ -121,9 +123,14 @@ export const Sidebar: React.FC<Props> = ({
                 {cloudConnected ? 'Terkoneksi' : 'Siap Kirim'}
               </span>
             </div>
-            <p className="text-[10px] text-neutral-400 mt-1.5 leading-relaxed">
-              Data tersimpan aman di browser & siap dikirim ke Google Sheets & Drive.
-            </p>
+            <div className="flex items-center justify-between text-[10px] text-emerald-400 font-bold mt-2 pt-1.5 border-t border-neutral-800">
+              <span className="flex items-center gap-1 text-neutral-400">
+                💾 Auto-Save Draft:
+              </span>
+              <span className="text-emerald-400 font-extrabold">
+                {lastSavedTime ? `Tersimpan (${lastSavedTime})` : 'Aktif (IndexedDB)'}
+              </span>
+            </div>
           </div>
 
           {/* Navigation Menu */}

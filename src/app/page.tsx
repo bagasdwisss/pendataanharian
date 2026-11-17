@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { DEFAULT_WEBHOOK_URL } from '@/lib/kantahData';
 import { mergeBeforeAfterImage, renderSingleImageCanvas } from '@/lib/imageMerger';
+import { saveFormDraft, loadFormDraft, clearFormDraft } from '@/lib/draftStorage';
 
 const createDefaultKecamatan = (kecamatanName: string = 'Medan Helvetia'): KecamatanData => ({
   id: Math.random().toString(36).substring(2, 9),
@@ -66,7 +67,12 @@ export default function Home() {
   const [submitSuccessMsg, setSubmitSuccessMsg] = useState<string | null>(null);
   const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false);
 
-  // Initialize date on mount
+  // Persistence & Draft states
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [isDraftRestored, setIsDraftRestored] = useState<boolean>(false);
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+
+  // Initialize date, webhook, history & load draft on mount
   useEffect(() => {
     const now = new Date();
     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -74,7 +80,8 @@ export default function Home() {
     const d = String(now.getDate()).padStart(2, '0');
     const m = String(now.getMonth() + 1).padStart(2, '0');
     const y = now.getFullYear();
-    setHariTanggal(`${day}, ${d}/${m}/${y}`);
+    const defaultDateStr = `${day}, ${d}/${m}/${y}`;
+    setHariTanggal(defaultDateStr);
 
     // Load saved webhook and history from localStorage (always fallback to hardcoded default)
     const savedWebhook = localStorage.getItem('kantah_medan_webhook_url');
@@ -92,7 +99,98 @@ export default function Home() {
         console.error(e);
       }
     }
+
+    // Load persisted draft if user refreshed the page
+    let isMounted = true;
+    async function restoreDraft() {
+      try {
+        const draft = await loadFormDraft();
+        if (isMounted && draft && draft.kecamatanList && draft.kecamatanList.length > 0) {
+          // Check if draft has any meaningful content entered by user
+          const hasContent = draft.kecamatanList.some(
+            (k) =>
+              Boolean(k.kelurahan) ||
+              Boolean(k.berhasilPlotting) ||
+              Boolean(k.digitasi) ||
+              Boolean(k.overlap) ||
+              Boolean(k.pemecahan) ||
+              Boolean(k.belumTeridentifikasi) ||
+              Boolean(k.dimatikan) ||
+              Boolean(k.diluarBatasAdministrasi) ||
+              (k.sitataFiles && k.sitataFiles.length > 0) ||
+              (k.kkpPairs && k.kkpPairs.length > 0)
+          );
+
+          if (hasContent) {
+            if (draft.hariTanggal) setHariTanggal(draft.hariTanggal);
+            if (draft.tim) setTim(draft.tim);
+            if (draft.customTim) setCustomTim(draft.customTim);
+            setKecamatanList(draft.kecamatanList);
+            setIsDraftRestored(true);
+            if (draft.savedAt) {
+              const dt = new Date(draft.savedAt);
+              setLastSavedTime(
+                `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+              );
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Gagal memuat draft tersimpan:', err);
+      } finally {
+        if (isMounted) setIsInitialized(true);
+      }
+    }
+
+    restoreDraft();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  // Debounced Auto-Save Draft to IndexedDB whenever user modifies any data
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const timer = setTimeout(async () => {
+      const now = Date.now();
+      await saveFormDraft({
+        hariTanggal,
+        tim,
+        customTim,
+        kecamatanList,
+        savedAt: now,
+      });
+      const dt = new Date(now);
+      setLastSavedTime(
+        `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+      );
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [hariTanggal, tim, customTim, kecamatanList, isInitialized]);
+
+  // Warn user if closing/refreshing tab with unsaved/unsubmitted form progress
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const hasUnsubmittedData = kecamatanList.some(
+        (k) =>
+          Boolean(k.kelurahan) ||
+          Boolean(k.berhasilPlotting) ||
+          Boolean(k.digitasi) ||
+          (k.sitataFiles && k.sitataFiles.length > 0) ||
+          (k.kkpPairs && k.kkpPairs.length > 0)
+      );
+      if (hasUnsubmittedData && !isSubmitting) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [kecamatanList, isSubmitting]);
 
   const handleSaveWebhook = (url: string) => {
     setWebhookUrl(url);
@@ -132,8 +230,10 @@ export default function Home() {
     setKecamatanList(list);
   };
 
-  const handleResetForm = () => {
-    if (confirm('Yakin ingin mereset seluruh form input harian ini?')) {
+  const handleResetForm = async () => {
+    if (confirm('Yakin ingin mereset seluruh form input harian ini? Draft tersimpan di browser juga akan dibersihkan.')) {
+      await clearFormDraft();
+      setIsDraftRestored(false);
       setKecamatanList([createDefaultKecamatan('')]);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -487,6 +587,10 @@ export default function Home() {
       setHistory(updatedHistory);
       localStorage.setItem('kantah_medan_history', JSON.stringify(updatedHistory));
 
+      // Clear persisted draft since data is submitted
+      await clearFormDraft();
+      setIsDraftRestored(false);
+
       // Trigger Confetti!
       confetti({
         particleCount: 100,
@@ -551,6 +655,11 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {lastSavedTime && (
+            <span className="text-[10px] font-bold text-neutral-300 hidden sm:inline-flex items-center gap-1 bg-neutral-800/80 px-2 py-0.5 rounded-md border border-neutral-700">
+              💾 Tersimpan {lastSavedTime}
+            </span>
+          )}
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="Terkoneksi"></span>
           <button
             type="button"
@@ -574,6 +683,7 @@ export default function Home() {
         cloudConnected={!!webhookUrl}
         isMobileOpen={isMobileOpen}
         onCloseMobile={() => setIsMobileOpen(false)}
+        lastSavedTime={lastSavedTime}
       />
 
       {/* Main Canvas Content */}
@@ -605,6 +715,42 @@ export default function Home() {
         {/* Tab 1: Main Input Form */}
         {activeTab === 'form' && (
           <form onSubmit={handleSubmitForm}>
+            {/* Draft Auto-Restored Notification Banner */}
+            {isDraftRestored && (
+              <div className="mb-5 rounded-2xl border-3 border-brutal bg-pastel-butter p-3.5 sm:p-4 shadow-neo flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-300">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-brutal text-pastel-butter shrink-0 text-base shadow-neo-sm">
+                    💾
+                  </div>
+                  <div>
+                    <span className="text-xs sm:text-sm font-black text-brutal block">
+                      Draft Formulir Otomatis Dipulihkan!
+                    </span>
+                    <span className="text-[11px] sm:text-xs text-gray-700 font-bold block">
+                      Data yang Anda ketik dan unggah sebelumnya tersimpan aman di browser {lastSavedTime ? `(terakhir disimpan pukul ${lastSavedTime})` : ''}.
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsDraftRestored(false)}
+                    className="neo-btn bg-white hover:bg-gray-100 text-brutal px-3 py-1.5 text-xs font-black"
+                  >
+                    Lanjutkan Mengisi
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResetForm}
+                    className="neo-btn bg-red-400 hover:bg-red-500 text-white px-3 py-1.5 text-xs font-black"
+                  >
+                    Reset & Mulai Baru
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Bento Grid Header */}
             <HeaderBento
               hariTanggal={hariTanggal}
