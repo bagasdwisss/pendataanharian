@@ -535,27 +535,27 @@ export default function Home() {
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-canvas bg-grid-pattern">
       {/* Sticky Mobile Top Header (Screens < lg) */}
-      <div className="lg:hidden sticky top-0 z-30 bg-sidebar-bg text-white border-b-3 border-brutal px-4 py-3 flex items-center justify-between shadow-neo">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl border-2 border-brutal bg-pastel-butter flex items-center justify-center text-brutal font-black text-base shadow-neo-sm">
+      <div className="lg:hidden sticky top-0 z-30 bg-sidebar-bg text-white border-b-3 border-brutal px-3.5 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between shadow-neo">
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border-2 border-brutal bg-pastel-butter flex items-center justify-center text-brutal font-black text-sm sm:text-base shadow-neo-sm shrink-0">
             🏛️
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="pill-badge bg-pastel-matcha text-brutal text-[8px] py-0 px-1.5 font-black">
               ATR/BPN MEDAN
             </div>
-            <span className="font-black text-xs block leading-tight text-white mt-0.5">
+            <span className="font-black text-xs block leading-tight text-white mt-0.5 truncate">
               PENDATAAN HARIAN
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="Terkoneksi"></span>
           <button
             type="button"
             onClick={() => setIsMobileOpen(true)}
-            className="neo-btn bg-pastel-butter hover:bg-yellow-300 text-brutal px-3 py-1.5 text-xs font-black flex items-center gap-1.5 shadow-neo-sm"
+            className="neo-btn bg-pastel-butter hover:bg-yellow-300 text-brutal px-2.5 sm:px-3 py-1.5 text-xs font-black flex items-center gap-1.5 shadow-neo-sm"
           >
             <Menu className="w-4 h-4" />
             Menu
@@ -577,7 +577,7 @@ export default function Home() {
       />
 
       {/* Main Canvas Content */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+      <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
         {/* Top Notification if submitted */}
         {submitSuccessMsg && (
           <div className="mb-6 rounded-2xl border-3 border-brutal bg-pastel-matcha p-4 shadow-neo flex items-start justify-between gap-3 animate-bounce">
@@ -618,12 +618,12 @@ export default function Home() {
 
             {/* List of Dynamic Kecamatan Cards */}
             <div className="space-y-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="pill-badge bg-brutal text-white text-xs">
+                  <span className="pill-badge bg-brutal text-white text-[10px] sm:text-xs">
                     DATA WILAYAH & DOKUMENTASI
                   </span>
-                  <h2 className="text-lg font-black text-brutal">
+                  <h2 className="text-base sm:text-lg font-black text-brutal">
                     Daftar Kecamatan & Pengukuran
                   </h2>
                 </div>
@@ -631,7 +631,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={handleAddKecamatan}
-                  className="neo-btn bg-pastel-butter hover:bg-yellow-300 text-brutal px-4 py-2 text-xs font-black flex items-center gap-2"
+                  className="neo-btn bg-pastel-butter hover:bg-yellow-300 text-brutal px-3.5 sm:px-4 py-1.5 sm:py-2 text-xs font-black flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-center"
                 >
                   <Plus className="w-4 h-4" />
                   + Tambah Kecamatan Lain
@@ -653,11 +653,11 @@ export default function Home() {
               ))}
 
               {/* Big Bottom Button to Add More Kecamatan */}
-              <div className="text-center py-4">
+              <div className="text-center py-2 sm:py-4">
                 <button
                   type="button"
                   onClick={handleAddKecamatan}
-                  className="neo-btn bg-white hover:bg-pastel-butter-light text-brutal px-6 py-3 text-sm font-black inline-flex items-center gap-2 shadow-neo-lg"
+                  className="neo-btn bg-white hover:bg-pastel-butter-light text-brutal px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 shadow-neo-lg w-full sm:w-auto"
                 >
                   <Plus className="w-5 h-5 text-emerald-600" />
                   Tambah Kecamatan & Kelurahan Baru
@@ -665,44 +665,44 @@ export default function Home() {
               </div>
 
               {/* Bottom Info Card */}
-              <div className="rounded-3xl border-3 border-brutal bg-white/80 p-5 text-center shadow-neo-sm">
-                <span className="pill-badge bg-brutal text-pastel-matcha mb-1.5 inline-block">
+              <div className="rounded-3xl border-3 border-brutal bg-white/80 p-4 sm:p-5 text-center shadow-neo-sm">
+                <span className="pill-badge bg-brutal text-pastel-matcha mb-1.5 inline-block text-[10px] sm:text-xs">
                   SELESAI INPUT
                 </span>
-                <h4 className="text-base font-black text-brutal">
+                <h4 className="text-sm sm:text-base font-black text-brutal">
                   Data {kecamatanList.length} Kecamatan Siap Dikirim
                 </h4>
-                <p className="text-xs text-gray-600 font-bold max-w-md mx-auto mt-1 mb-3">
+                <p className="text-[11px] sm:text-xs text-gray-600 font-bold max-w-md mx-auto mt-1 mb-3">
                   Seluruh data angka dan foto akan diproses. Anda dapat langsung mengklik tombol melayang di pojok kanan bawah untuk mengirim progress harian.
                 </p>
                 <button
                   type="button"
                   onClick={() => setActiveTab('summary')}
-                  className="neo-btn bg-canvas hover:bg-gray-100 text-brutal px-4 py-2 text-xs font-black inline-flex items-center gap-2"
+                  className="neo-btn bg-canvas hover:bg-gray-100 text-brutal px-3.5 sm:px-4 py-2 text-xs font-black inline-flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
                   <Share2 className="w-4 h-4 text-emerald-700" /> Pratinjau Teks Laporan WhatsApp
                 </button>
               </div>
 
               {/* Floating Bottom-Right Submit Action Button */}
-              <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40">
+              <div className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-40 max-w-[calc(100vw-1.5rem)] sm:max-w-md">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-5 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm font-black flex items-center justify-center gap-2.5 shadow-neo-xl disabled:opacity-50 whitespace-nowrap transition-transform hover:-translate-y-0.5 active:translate-y-0"
+                  className="neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-4 sm:px-6 py-2.5 sm:py-3.5 text-xs sm:text-sm font-black flex items-center justify-center gap-2 sm:gap-2.5 shadow-neo-xl disabled:opacity-50 transition-transform hover:-translate-y-0.5 active:translate-y-0 w-full sm:w-auto"
                 >
                   <Send className="w-4 h-4 flex-shrink-0" />
-                  <span>
+                  <span className="truncate">
                     {isSubmitting ? 'Memproses...' : '🚀 KIRIM PROGRESS HARIAN'}
                   </span>
-                  <span className="pill-badge bg-brutal text-white text-[10px] sm:text-xs py-0.5 px-2.5 font-black whitespace-nowrap">
-                    {kecamatanList.length} Kecamatan
+                  <span className="pill-badge bg-brutal text-white text-[10px] sm:text-xs py-0.5 px-2 font-black shrink-0">
+                    {kecamatanList.length} Kec
                   </span>
                 </button>
               </div>
 
               {/* Bottom Spacer for Floating Dock */}
-              <div className="h-16" />
+              <div className="h-24 sm:h-20" />
             </div>
           </form>
         )}

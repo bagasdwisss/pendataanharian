@@ -83,22 +83,22 @@ export const GoogleSheetModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
       {/* Intro Card */}
-      <div className="rounded-3xl border-3 border-brutal bg-pastel-butter p-6 shadow-neo-lg">
+      <div className="rounded-3xl border-3 border-brutal bg-pastel-butter p-4 sm:p-6 shadow-neo-lg">
         <div className="flex items-center gap-3 mb-3">
-          <div className="p-3 bg-brutal text-pastel-butter rounded-2xl shadow-neo-sm">
-            <Cloud className="w-6 h-6" />
+          <div className="p-2.5 sm:p-3 bg-brutal text-pastel-butter rounded-2xl shadow-neo-sm shrink-0">
+            <Cloud className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <div className="pill-badge bg-brutal text-white text-[10px] mb-1">
+            <div className="pill-badge bg-brutal text-white text-[9px] sm:text-[10px] mb-1">
               CLOUD INTEGRATION
             </div>
-            <h2 className="text-xl font-black text-brutal">
+            <h2 className="text-lg sm:text-xl font-black text-brutal">
               Integrasi Google Sheets & Google Drive
             </h2>
             <p className="text-xs text-gray-700 font-bold">
-              Hubungkan aplikasi dengan Google Spreadsheet & Google Drive Anda agar data dan foto gabungan langsung tersimpan secara otomatis.
+              Hubungkan aplikasi dengan Google Spreadsheet & Google Drive Anda agar data dan dokumen PDF langsung tersimpan secara otomatis.
             </p>
           </div>
         </div>
@@ -106,11 +106,11 @@ export const GoogleSheetModal: React.FC<Props> = ({
         {/* Spreadsheet & Drive Link Banners */}
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Spreadsheet */}
-          <div className="bg-white rounded-2xl border-2 border-brutal p-3.5 flex items-center justify-between gap-3 shadow-neo-sm">
-            <div className="flex items-center gap-2.5">
+          <div className="bg-white rounded-2xl border-2 border-brutal p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-neo-sm">
+            <div className="flex items-center gap-2.5 min-w-0">
               <FileSpreadsheet className="w-5 h-5 text-emerald-600 flex-shrink-0" />
               <div className="min-w-0">
-                <span className="text-xs font-black text-brutal block">
+                <span className="text-xs font-black text-brutal block truncate">
                   Google Spreadsheet:
                 </span>
                 <span className="text-[11px] text-gray-500 font-medium truncate block">
@@ -129,15 +129,15 @@ export const GoogleSheetModal: React.FC<Props> = ({
           </div>
 
           {/* Drive Folder */}
-          <div className="bg-white rounded-2xl border-2 border-brutal p-3.5 flex items-center justify-between gap-3 shadow-neo-sm">
-            <div className="flex items-center gap-2.5">
+          <div className="bg-white rounded-2xl border-2 border-brutal p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-neo-sm">
+            <div className="flex items-center gap-2.5 min-w-0">
               <HardDrive className="w-5 h-5 text-blue-600 flex-shrink-0" />
               <div className="min-w-0">
-                <span className="text-xs font-black text-brutal block">
-                  Google Drive Foto:
+                <span className="text-xs font-black text-brutal block truncate">
+                  Google Drive Target:
                 </span>
                 <span className="text-[11px] text-gray-500 font-medium truncate block">
-                  Folder TEAM 1&2, TEAM 3, TEAM4
+                  Folder TEAM 1&2 & TEAM 3&4
                 </span>
               </div>
             </div>
@@ -154,13 +154,13 @@ export const GoogleSheetModal: React.FC<Props> = ({
       </div>
 
       {/* URL Input Form */}
-      <div className="rounded-3xl border-3 border-brutal bg-white p-6 shadow-neo-lg">
-        <h3 className="text-base font-black text-brutal mb-2 flex items-center gap-2">
+      <div className="rounded-3xl border-3 border-brutal bg-white p-4 sm:p-6 shadow-neo-lg">
+        <h3 className="text-sm sm:text-base font-black text-brutal mb-2 flex items-center gap-2">
           <HardDrive className="w-5 h-5 text-blue-600" />
           1. Masukkan Google Apps Script Web App URL
         </h3>
         <p className="text-xs text-gray-600 font-medium mb-4">
-          URL Web App ini akan bertugas menerima data baris, mengunggah foto gabungan ke Google Drive, dan mengisi kolom link SITATA & KKP.
+          URL Web App ini akan bertugas menerima data baris, mengunggah dokumen PDF ke Google Drive (subfolder KKP & SITATA), dan mengisi kolom link di Spreadsheet.
         </p>
 
         <div className="space-y-3">
@@ -173,15 +173,15 @@ export const GoogleSheetModal: React.FC<Props> = ({
               value={inputUrl}
               onChange={(e) => setInputUrl(e.target.value)}
               placeholder="https://script.google.com/macros/s/AKfycbx.../exec"
-              className="w-full neo-input px-3.5 py-2.5 text-sm font-bold text-brutal"
+              className="w-full neo-input px-3.5 py-2.5 text-xs sm:text-sm font-bold text-brutal"
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-2">
             <button
               type="button"
               onClick={handleSave}
-              className="neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-4 py-2 text-xs font-black flex items-center gap-2"
+              className="neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-4 py-2 text-xs font-black flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <Save className="w-4 h-4" /> Simpan Konfigurasi
             </button>
@@ -193,7 +193,7 @@ export const GoogleSheetModal: React.FC<Props> = ({
                 onSaveWebhookUrl(DEFAULT_WEBHOOK_URL);
                 alert('URL berhasil diatur ke URL Google Apps Script BPN Medan!');
               }}
-              className="neo-btn bg-white hover:bg-gray-100 text-brutal px-3.5 py-2 text-xs font-black flex items-center gap-1.5"
+              className="neo-btn bg-white hover:bg-gray-100 text-brutal px-3.5 py-2 text-xs font-black flex items-center justify-center gap-1.5 w-full sm:w-auto"
             >
               <RotateCcw className="w-3.5 h-3.5" /> Reset ke URL BPN Default
             </button>
@@ -202,7 +202,7 @@ export const GoogleSheetModal: React.FC<Props> = ({
               type="button"
               onClick={handleTestConnection}
               disabled={testStatus === 'testing'}
-              className="neo-btn bg-white hover:bg-gray-100 text-brutal px-3.5 py-2 text-xs font-black flex items-center gap-1.5"
+              className="neo-btn bg-white hover:bg-gray-100 text-brutal px-3.5 py-2 text-xs font-black flex items-center justify-center gap-1.5 w-full sm:w-auto"
             >
               <Sparkles className="w-4 h-4 text-amber-500" />
               {testStatus === 'testing' ? 'Menguji...' : 'Uji Koneksi Langsung'}

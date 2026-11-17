@@ -135,14 +135,14 @@ export const SummaryModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
       {/* Top Banner */}
-      <div className="rounded-3xl border-3 border-brutal bg-pastel-butter p-6 shadow-neo-lg flex flex-wrap items-center justify-between gap-4">
+      <div className="rounded-3xl border-3 border-brutal bg-pastel-butter p-4 sm:p-6 shadow-neo-lg flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="pill-badge bg-brutal text-pastel-butter mb-1.5">
+          <span className="pill-badge bg-brutal text-pastel-butter mb-1.5 text-[10px] sm:text-xs">
             LAPORAN KILAT WHATSAPP / TELEGRAM
           </span>
-          <h2 className="text-xl font-black text-brutal">
+          <h2 className="text-lg sm:text-xl font-black text-brutal">
             Ringkasan & Format Siap Kirim
           </h2>
           <p className="text-xs text-gray-700 font-bold">
@@ -150,11 +150,11 @@ export const SummaryModal: React.FC<Props> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={handleCopy}
-            className="neo-btn bg-brutal text-white px-4 py-2 text-xs font-black flex items-center gap-2 shadow-neo-sm"
+            className="neo-btn bg-brutal text-white px-4 py-2.5 sm:py-2 text-xs font-black flex items-center justify-center gap-2 shadow-neo-sm w-full sm:w-auto flex-1 sm:flex-none"
           >
             {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
             {copied ? 'Tersalin Ke Clipboard!' : 'Salin Teks WhatsApp'}
@@ -163,7 +163,7 @@ export const SummaryModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={handleExportCSV}
-            className="neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-3.5 py-2 text-xs font-black flex items-center gap-1.5"
+            className="neo-btn bg-pastel-matcha hover:bg-emerald-300 text-brutal px-3.5 py-2 text-xs font-black flex items-center justify-center gap-1.5 w-full sm:w-auto flex-1 sm:flex-none"
           >
             <Download className="w-4 h-4" /> Unduh CSV
           </button>
@@ -171,7 +171,7 @@ export const SummaryModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={() => window.print()}
-            className="neo-btn bg-white hover:bg-gray-100 text-brutal px-3 py-2 text-xs font-black flex items-center gap-1.5"
+            className="neo-btn bg-white hover:bg-gray-100 text-brutal px-3 py-2 text-xs font-black flex items-center justify-center gap-1.5 w-full sm:w-auto"
           >
             <Printer className="w-4 h-4" /> Cetak
           </button>
@@ -179,7 +179,7 @@ export const SummaryModal: React.FC<Props> = ({
       </div>
 
       {/* WhatsApp Message Preview Box */}
-      <div className="rounded-3xl border-3 border-brutal bg-white p-6 shadow-neo-lg">
+      <div className="rounded-3xl border-3 border-brutal bg-white p-4 sm:p-6 shadow-neo-lg">
         <div className="flex items-center justify-between border-b-2 border-brutal pb-3 mb-4">
           <span className="text-xs font-black uppercase text-gray-500 tracking-wider flex items-center gap-2">
             <Share2 className="w-4 h-4 text-emerald-600" /> Pratinjau Teks Pesan Laporan
@@ -189,7 +189,7 @@ export const SummaryModal: React.FC<Props> = ({
           </span>
         </div>
 
-        <div className="bg-canvas border-2 border-brutal rounded-2xl p-4 font-mono text-xs text-gray-800 whitespace-pre-wrap leading-relaxed shadow-neo-sm select-all">
+        <div className="bg-canvas border-2 border-brutal rounded-2xl p-3 sm:p-4 font-mono text-[11px] sm:text-xs text-gray-800 whitespace-pre-wrap break-words leading-relaxed shadow-neo-sm select-all overflow-x-auto">
           {generateWhatsAppText()}
         </div>
       </div>

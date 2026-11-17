@@ -173,21 +173,21 @@ export const ImagePairMerger: React.FC<Props> = ({
   };
 
   return (
-    <div className="rounded-2xl border-2 border-brutal bg-white p-4 shadow-neo">
+    <div className="rounded-2xl border-2 border-brutal bg-white p-3.5 sm:p-4 shadow-neo">
       {/* Header bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-brutal pb-3 mb-4">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl border-2 border-brutal bg-pastel-butter">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 border-b-2 border-brutal pb-3 mb-4">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-xl border-2 border-brutal bg-pastel-butter shrink-0">
             <Layers className="w-5 h-5 text-brutal" />
           </div>
           <div>
-            <h4 className="font-extrabold text-base text-brutal flex items-center gap-2">
+            <h4 className="font-extrabold text-sm sm:text-base text-brutal flex items-center gap-2">
               {title}
-              <span className="pill-badge text-[10px] py-0 px-2 bg-yellow-100 text-yellow-900 border border-yellow-400 font-bold">
+              <span className="pill-badge text-[9px] sm:text-[10px] py-0 px-2 bg-yellow-100 text-yellow-900 border border-yellow-400 font-bold">
                 {pairs.length}/10 Berkas
               </span>
             </h4>
-            <p className="text-xs text-gray-600 font-medium">
+            <p className="text-[11px] sm:text-xs text-gray-600 font-medium">
               Foto <b>Sebelum</b> & <b>Sesudah</b> otomatis digabung jadi PDF. <i>(Jika hanya ada 1 foto tetap diproses resmi ke PDF).</i>
             </p>
           </div>
@@ -197,7 +197,7 @@ export const ImagePairMerger: React.FC<Props> = ({
           type="button"
           onClick={handleAddPair}
           disabled={pairs.length >= 10}
-          className="neo-btn bg-pastel-butter hover:bg-yellow-300 text-brutal px-3 py-1.5 text-xs font-black flex items-center gap-1.5 disabled:opacity-50"
+          className="neo-btn bg-pastel-butter hover:bg-yellow-300 text-brutal px-3 py-2 text-xs font-black flex items-center justify-center gap-1.5 disabled:opacity-50 w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" />
           Tambah Dokumentasi KKP
@@ -205,8 +205,8 @@ export const ImagePairMerger: React.FC<Props> = ({
       </div>
 
       {/* Notice info */}
-      <div className="bg-canvas border-2 border-brutal rounded-xl p-2.5 mb-4 text-xs font-semibold flex items-center gap-2 text-gray-700">
-        <span className="text-base">⚡</span>
+      <div className="bg-canvas border-2 border-brutal rounded-xl p-2.5 mb-4 text-[11px] sm:text-xs font-semibold flex items-center gap-2 text-gray-700">
+        <span className="text-base shrink-0">⚡</span>
         <span>
           Format output: <b>PDF</b> otomatis tersimpan di folder <b>KKP</b> Google Drive. Baik sepasang maupun foto tunggal tetap terproses aman.
         </span>
@@ -236,29 +236,29 @@ export const ImagePairMerger: React.FC<Props> = ({
               className="border-2 border-brutal rounded-xl p-3 bg-gray-50 relative shadow-neo-sm"
             >
               {/* Pair Title Header */}
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-200">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 pb-2 mb-2 border-b border-gray-200">
                 <span className="pill-badge bg-brutal text-white text-[10px]">
                   {type} #{idx + 1}
                 </span>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                   {pair.status === 'merging' && (
-                    <span className="text-xs font-bold text-amber-600 flex items-center gap-1 animate-pulse">
+                    <span className="text-[11px] sm:text-xs font-bold text-amber-600 flex items-center gap-1 animate-pulse">
                       ⏳ Memproses PDF...
                     </span>
                   )}
                   {pair.status === 'ready' && pair.mode === 'both' && (
-                    <span className="text-xs font-extrabold text-emerald-800 bg-pastel-matcha px-2.5 py-0.5 rounded-full border border-brutal flex items-center gap-1">
+                    <span className="text-[11px] sm:text-xs font-extrabold text-emerald-800 bg-pastel-matcha px-2.5 py-0.5 rounded-full border border-brutal flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5" /> Berhasil Digabung (PDF)
                     </span>
                   )}
                   {pair.status === 'ready' && pair.mode === 'before_only' && (
-                    <span className="text-xs font-extrabold text-rose-800 bg-rose-100 px-2.5 py-0.5 rounded-full border border-rose-300 flex items-center gap-1">
+                    <span className="text-[11px] sm:text-xs font-extrabold text-rose-800 bg-rose-100 px-2.5 py-0.5 rounded-full border border-rose-300 flex items-center gap-1">
                       <FileCheck className="w-3.5 h-3.5 text-rose-600" /> Sebelum Saja (PDF Siap)
                     </span>
                   )}
                   {pair.status === 'ready' && pair.mode === 'after_only' && (
-                    <span className="text-xs font-extrabold text-blue-800 bg-sky-100 px-2.5 py-0.5 rounded-full border border-sky-300 flex items-center gap-1">
+                    <span className="text-[11px] sm:text-xs font-extrabold text-blue-800 bg-sky-100 px-2.5 py-0.5 rounded-full border border-sky-300 flex items-center gap-1">
                       <FileCheck className="w-3.5 h-3.5 text-blue-600" /> Sesudah Saja (PDF Siap)
                     </span>
                   )}
@@ -274,7 +274,7 @@ export const ImagePairMerger: React.FC<Props> = ({
               </div>
 
               {/* Upload Slots: Sebelum & Sesudah */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 {/* 1. Sebelum */}
                 <div className="border-2 border-dashed border-red-300 rounded-lg p-2.5 bg-red-50/40 relative">
                   <div className="flex items-center justify-between mb-1.5">
@@ -386,7 +386,7 @@ export const ImagePairMerger: React.FC<Props> = ({
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                       {pair.mode === 'both' ? 'Hasil Penggabungan Otomatis:' : 'Hasil Olah Dokumen Tunggal:'}
                     </span>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
                       <button
                         type="button"
                         onClick={() => setActiveModalImg(pair.mergedUrl)}
@@ -427,15 +427,15 @@ export const ImagePairMerger: React.FC<Props> = ({
       {/* Modal Zoom Preview */}
       {activeModalImg && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 sm:p-4 backdrop-blur-xs animate-in fade-in duration-200"
           onClick={() => setActiveModalImg(null)}
         >
           <div
-            className="relative max-w-4xl max-h-[90vh] bg-white rounded-2xl border-4 border-brutal p-2 shadow-neo-xl overflow-hidden flex flex-col"
+            className="relative w-[95vw] sm:max-w-4xl max-h-[90vh] bg-white rounded-2xl border-4 border-brutal p-2 shadow-neo-xl overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 mb-2 border-b-2 border-brutal px-2">
-              <span className="font-extrabold text-sm text-brutal flex items-center gap-2">
+              <span className="font-extrabold text-xs sm:text-sm text-brutal flex items-center gap-2">
                 📄 Pratinjau Dokumen KKP
               </span>
               <button
